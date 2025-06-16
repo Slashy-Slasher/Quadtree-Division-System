@@ -12,5 +12,5 @@ The primary intention of this library is to create a launching off point for oth
   
   ‎ 
   
-Above you can see the visual representation of utilizing this library, it takes a 2d coordinate plane and then subdivides from the base quadrants through a recursive structure. This visual representation has been slowed down significantly for visual understanding.
+Above you can see the visual representation of utilizing this library, it takes a 2d coordinate plane and then subdivides from the base quadrants through a recursive structure. This visual representation has been slowed down significantly for visual understanding. The conditions on this are that whenever a subquadrant contains more than three points, it will self divide until there are less than three within the region.  
 </p2>
