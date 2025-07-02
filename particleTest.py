@@ -4,7 +4,7 @@ import pygame
 from pixel import pixel
 
 backColor = (255, 255, 255)
-resolution = (width, height) = (500, 300)
+resolution = (width, height) = (2560, 1440)   #This doesn't play with all systems well, but works as a test
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption('Barnes-Hut')
 screen.fill(backColor)
@@ -20,8 +20,8 @@ def alignPoints(pixelArray):
     points = []
     for x in pixelArray:
         points.append(x.getPosition())
-    print(pixelArray)
-    print(points)
+    #print(pixelArray)
+    #print(points)
     return points
 
 
@@ -29,8 +29,26 @@ def redrawQuadTree(pixelArray):
     tree = QuadTree(0, 0, resolution[0], resolution[1], alignPoints(pixelArray), screen, 0)  #Change Points to Align Points
     tree.drawPoints(5)
     tree.subDivide(0)
-    array = tree.helperDFS(tree)
+    array = tree.helperDFS3(tree)    #Should contain all the relevant data from the struct
+    #print(f'Type: {type(array)}: Length {len(array)}')
+    print(f'Type: {type(array)}: Length {len(array)}')
+    print(array[0])
+    print(array[0].returnCenter())
+    pygame.draw.circle(screen, (0,0,255), array[0].returnCenter(), 5)
+    pygame.draw.circle
     return array
+
+
+def universalGravity(pixelArray, array):   #Functions as the primary driver of the Barnes-Hut Simulation
+    #Finds the number of planets in each leaf node
+    #Finds the total mass of each leaf node
+    #Finds the center of mass(Depends on the coordinates of the leaf node)
+    #Calculates and then Applies the force to each planet represented by the center of mass
+
+    print(array)
+
+    return True
+
 
 
 pixelArray = [pixel(100, (0, 40), (0, 0), 1), pixel(100, (60, 59), (0, 0), 1), pixel(100, (0, 5), (0, 0), 1), pixel(100, (0, 100), (0, 0), 1),pixel(100, (0, 450), (0, 0), 1)]
@@ -48,14 +66,22 @@ points = [(30, 30), (30, 40), (30, 50), (40, 50), (60, 50),(65, 50), (70, 50),(6
 #for x in array:
 #    for y in x:
 #        print(y)
-
+#redrawQuadTree(pixelArray)
 
 pygame.display.flip()
 running = True
 
 while running:
     for event in pygame.event.get():
-        if event.type == pygame.QUIT:
+        keys = pygame.key.get_pressed()
+        if event.type == pygame.QUIT or (keys[pygame.K_LCTRL] and keys[pygame.K_c]): #Pressing Ctrl + C kills task
             running = False
 
         redrawQuadTree(pixelArray)
+
+        #print(len(quadTree[0][0]))
+
+
+        #universalGravity(pixelArray, points)
+
+        pygame.display.flip()

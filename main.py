@@ -14,10 +14,12 @@ def drawSeperations(p0, p1, p2, p3):
     pygame.draw.line(screen, (0, 0, 0), p2, p3, 1)
 
 
+# Finish
+
 
 args = sys.argv
 backColor = (255, 255, 255)
-resolution = (width, height) = (500, 300)
+resolution = (width, height) = (2560, 1440)
 dotNumber = 1000
 sleeptime = 10
 print(args)

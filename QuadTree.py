@@ -20,6 +20,7 @@ class QuadTree:
         self.root = False
         if self.TLC is None and self.TRC is None and self.BLC is None and self.BRC is None and self.depth == 0:
             self.root = True
+            self.rootPos = self
 
     def getTLC(self):  # Returns Top Left Corner of a given Node
         return self.TLC
@@ -41,6 +42,20 @@ class QuadTree:
             return True
         else:
             return False
+
+    def returnCenter(self):
+        return (self.w/2, self.h/2)
+
+    def helperDFS3(self, node):
+        storage = []
+        for child_getter in [node.getTLC, node.getTRC, node.getBLC, node.getBRC]:
+            child = child_getter()  # Get the child node
+            if child is not None:
+                if child.isLeaf():
+                    storage.append(child)
+                else:
+                    storage.extend(self.helperDFS3(child))  # Flatten the result of recursion
+        return storage
 
     def helperDFS(self, node):
         storage = []
@@ -77,12 +92,12 @@ class QuadTree:
         return newPoints
 
     def drawLines(self, screen, p0, p1, p2, p3):
-        black = (0, 0, 0)
+        black = (255, 255, 255)
         pygame.draw.line(screen, black, p0, p1, 1)  # screen, line color, point 1, point 2, thickness
         pygame.draw.line(screen, black, p2, p3, 1)
 
     def drawLines2(self, qT, thickness):
-        black = (0, 0, 0)
+        black = (255, 255, 255)
         p0, p1, p2, p3 = (qT.w / 2, qT.y), (qT.w / 2, qT.h), (qT.x, (qT.h / 2 + qT.y / 2)), (
             qT.w, (qT.h / 2 + qT.y / 2))
         pygame.draw.line(qT.screen, black, p0, p1, thickness)
