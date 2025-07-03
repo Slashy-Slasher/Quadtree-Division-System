@@ -53,7 +53,7 @@ class QuadTree:
             if child is not None:
                 if child.isLeaf():
                     storage.append(child)
-                    print(node.getPoints())
+                    #print(node.getPoints())
                 else:
                     storage.extend(QuadTree.helperDFS3(child))  # Flatten the result of recursion
         return storage
@@ -92,6 +92,7 @@ class QuadTree:
                 newPoints.append(j)
         return newPoints
 
+
     def drawLines(self, screen, p0, p1, p2, p3):
         black = (255, 255, 255)
         pygame.draw.line(screen, black, p0, p1, 1)  # screen, line color, point 1, point 2, thickness
@@ -126,6 +127,11 @@ class QuadTree:
                                ((self.TLC.w + self.TLC.x) / 2, self.TLC.h),
                                (self.TLC.x, (self.TLC.y + self.TLC.h) / 2),
                                (self.TLC.w, (self.TLC.y + self.TLC.h) / 2))
+            elif 0 < len(self.pointsIn(self.x, self.y, (self.x + self.w) / 2, (self.y + self.h) / 2, self.points)) <= self.max:
+                self.TLC = QuadTree(self.x, self.y, (self.x + self.w) / 2, (self.y + self.h) / 2, self.points,
+                                    self.screen, self.depth + 1)
+
+
 
             if len(self.pointsIn((self.w + self.x) / 2, self.y, self.w, (self.y + self.h) / 2,
                                  self.points)) > self.max:  # w/2
@@ -137,6 +143,11 @@ class QuadTree:
                                ((self.TRC.w + self.TRC.x) / 2, self.TRC.h),
                                (self.TRC.x, (self.TRC.h + self.TRC.y) / 2),
                                (self.TRC.w, (self.TRC.h + self.TRC.y) / 2))
+            elif 0 <len(self.pointsIn((self.w + self.x) / 2, self.y, self.w, (self.y + self.h) / 2,
+                                 self.points)) <= self.max:  # w/2
+                self.TRC = QuadTree((self.w + self.x) / 2, self.y, self.w, (self.y + self.h) / 2, self.points,
+                                    self.screen, self.depth + 1)
+
 
             if len(self.pointsIn(self.x, (self.y + self.h) / 2, (self.x + self.w) / 2, self.h,
                                  self.points)) > self.max:  # h/2
@@ -148,6 +159,11 @@ class QuadTree:
                                ((self.BLC.w + self.BLC.x) / 2, self.BLC.h),
                                (self.BLC.x, (self.BLC.h + self.BLC.y) / 2),
                                (self.BLC.w, (self.BLC.h + self.BLC.y) / 2))
+            elif 0 <len(self.pointsIn(self.x, (self.y + self.h) / 2, (self.x + self.w) / 2, self.h,
+                                 self.points)) <= self.max:  # h/2
+                self.BLC = QuadTree(self.x, (self.y + self.h) / 2, (self.x + self.w) / 2, self.h, self.points,
+                                    self.screen, self.depth + 1)
+
 
             if len(self.pointsIn((self.w + self.x) / 2, (self.y + self.h) / 2, self.w, self.h, self.points)) > self.max:
                 self.BRC = QuadTree((self.w + self.x) / 2, (self.y + self.h) / 2, self.w, self.h, self.points,
@@ -158,6 +174,9 @@ class QuadTree:
                                ((self.BRC.w + self.BRC.x) / 2, self.BRC.h),
                                (self.BRC.x, self.BRC.h / 2 + self.BRC.y / 2),
                                (self.BRC.w, (self.BRC.h / 2 + self.BRC.y / 2)))
+            elif 0 <len(self.pointsIn((self.w + self.x) / 2, (self.y + self.h) / 2, self.w, self.h, self.points)) <= self.max:
+                self.BRC = QuadTree((self.w + self.x) / 2, (self.y + self.h) / 2, self.w, self.h, self.points,
+                                    self.screen, self.depth + 1)
             pygame.display.flip()
         else:
             print("Depth Reached")
