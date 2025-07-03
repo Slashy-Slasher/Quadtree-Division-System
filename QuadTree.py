@@ -46,15 +46,16 @@ class QuadTree:
     def returnCenter(self):
         return (self.w/2, self.h/2)
 
-    def helperDFS3(self, node):
+    def helperDFS3(node):
         storage = []
         for child_getter in [node.getTLC, node.getTRC, node.getBLC, node.getBRC]:
             child = child_getter()  # Get the child node
             if child is not None:
                 if child.isLeaf():
                     storage.append(child)
+                    print(node.getPoints())
                 else:
-                    storage.extend(self.helperDFS3(child))  # Flatten the result of recursion
+                    storage.extend(QuadTree.helperDFS3(child))  # Flatten the result of recursion
         return storage
 
     def helperDFS(self, node):

@@ -29,13 +29,14 @@ def redrawQuadTree(pixelArray):
     tree = QuadTree(0, 0, resolution[0], resolution[1], alignPoints(pixelArray), screen, 0)  #Change Points to Align Points
     tree.drawPoints(5)
     tree.subDivide(0)
-    array = tree.helperDFS3(tree)    #Should contain all the relevant data from the struct
+    array = QuadTree.helperDFS3(tree)    #Should contain all the relevant data from the struct
     #print(f'Type: {type(array)}: Length {len(array)}')
     print(f'Type: {type(array)}: Length {len(array)}')
     print(array[0])
+    print(array[0].getPoints())
     print(array[0].returnCenter())
+    print()
     pygame.draw.circle(screen, (0,0,255), array[0].returnCenter(), 5)
-    pygame.draw.circle
     return array
 
 
@@ -44,6 +45,8 @@ def universalGravity(pixelArray, array):   #Functions as the primary driver of t
     #Finds the total mass of each leaf node
     #Finds the center of mass(Depends on the coordinates of the leaf node)
     #Calculates and then Applies the force to each planet represented by the center of mass
+
+
 
     print(array)
 
@@ -68,6 +71,9 @@ points = [(30, 30), (30, 40), (30, 50), (40, 50), (60, 50),(65, 50), (70, 50),(6
 #        print(y)
 #redrawQuadTree(pixelArray)
 
+
+redrawQuadTree(pixelArray)
+
 pygame.display.flip()
 running = True
 
@@ -77,7 +83,7 @@ while running:
         if event.type == pygame.QUIT or (keys[pygame.K_LCTRL] and keys[pygame.K_c]): #Pressing Ctrl + C kills task
             running = False
 
-        redrawQuadTree(pixelArray)
+        #redrawQuadTree(pixelArray)
 
         #print(len(quadTree[0][0]))
 
