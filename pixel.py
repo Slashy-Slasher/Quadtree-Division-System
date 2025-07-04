@@ -18,6 +18,10 @@ class pixel:
     def getMass(self):
         return self.mass
 
+    def vector_set(self, direction, force):
+            self.direction = direction
+            self.force = force
+
     def applyForce(self):
         self.position += self.force * self.direction
 
@@ -27,6 +31,12 @@ class pixel:
         p2 = pygame.Vector2(p1[0] - p0[0], p1[1] - p0[0])
         print(p2.normalize())
         return p0
+
+    def return_list_mass(pixel_array):
+        temp_mass = 0
+        for x in pixel_array:
+            temp_mass += x.getMass()
+        return temp_mass
 
     def gravity(self, g, obj0, obj1):
         self.direction = self.getDirection(obj0.position, obj1.position)

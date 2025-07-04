@@ -1,3 +1,5 @@
+import math
+
 from pyanaconda.modules.network.utils import get_default_route_iface
 
 from QuadTree import QuadTree
@@ -65,14 +67,35 @@ def redrawQuadTree(pixelArray):
 
     return array
 
+def gravitational_calculation(g, nested_pixel_array):
+    #Calculate the force of Gravity for everything within the leaf
+    #Estimates the rest of the universal force using far off leafs
+    temp_force = 0
+    temp_direction = (0,0)
 
-def universalGravity(pixelArray, array):   #Functions as the primary driver of the Barnes-Hut Simulation
-    #Finds the number of planets in each leaf node
-    #Finds the total mass of each leaf node
-    #Finds the center of mass(Depends on the coordinates of the leaf node)
-    #Calculates and then Applies the force to each planet represented by the center of mass
 
 
+    for x in nested_pixel_array:
+        #for z in x:
+        #    if(x is not z):
+
+        for y in nested_pixel_array:
+            if(x is not y):
+                temp_force += (g * pixel.return_list_mass(x) * pixel.return_list_mass(y))/math.dist(findCenterOfMass(x), findCenterOfMass(y))
+                #+temp_direction += pixel.getDirection(findCenterOfMass(x), findCenterOfMass(x))
+                #temp_direction +=
+
+        temp_force = 0
+        temp_direction = (0,0)
+
+
+    return False
+
+def universe_tick(pixelArray, array):   #Functions as the primary driver of the Barnes-Hut Simulation
+    nested_pixel_array = pixelArrayGrouping(pixelArray, array) #Merges the information from the two lists together
+    COM = 0                                                    #Center of Mas+s
+    gravitational_constant = 1                                 #Gravitational Constant [Set to 1 by default]
+    gravitational_calculation(gravitational_constant, nested_pixel_array)
 
     #print(array)
 
@@ -80,22 +103,7 @@ def universalGravity(pixelArray, array):   #Functions as the primary driver of t
 
 
 pixelArray = [pixel(100, (0, 40), (0, 0), 1), pixel(100, (60.323, 59), (0, 0), 1), pixel(100, (0, 5), (0, 0), 1), pixel(100, (0, 100), (0, 0), 1),pixel(100, (0, 450), (0, 0), 1)]
-#p0 = pixel(10,(100, 100),0,0)
-#p1 = pixel(10,(0,0), 0,0)
-#pixel.gravity(p0, 1, p0, p1)
 points = [(30, 30), (30, 40), (30, 50), (40, 50), (60, 50),(65, 50), (70, 50),(63, 30), (63, 30), (190, 180), (200, 180), (180, 180), (160, 180)]
-
-#tree = QuadTree(0, 0, resolution[0], resolution[1], points, screen, 0)
-#tree.drawPoints(5)
-
-#tree.subDivide(0)
-#array = tree.helperDFS(tree)
-#print(array)
-#for x in array:
-#    for y in x:
-#        print(y)
-#redrawQuadTree(pixelArray)
-
 
 redrawQuadTree(pixelArray)
 
@@ -109,10 +117,9 @@ while running:
             running = False
 
         print(f'Number of Pixel present: {(len(pixelArray))}')
-        array = redrawQuadTree(pixelArray)
-        print(findCenterOfMass(pixelArray))
-        print(pixelArrayGrouping(pixelArray, array))
+        array = redrawQuadTree(pixelArray)  #Draws out the quadtree and creates the game window, returns leaf array
+        universe_tick(pixelArray, array)             #Runs the model of the simulation based on the leaf array
 
-        #universalGravity(pixelArray, points)
+
 
         pygame.display.flip()
