@@ -53,7 +53,6 @@ class QuadTree:
             if child is not None:
                 if child.isLeaf():
                     storage.append(child)
-                    #print(node.getPoints())
                 else:
                     storage.extend(QuadTree.helperDFS3(child))  # Flatten the result of recursion
         return storage

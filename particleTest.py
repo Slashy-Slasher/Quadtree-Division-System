@@ -1,3 +1,5 @@
+from pyanaconda.modules.network.utils import get_default_route_iface
+
 from QuadTree import QuadTree
 import pygame
 
@@ -24,19 +26,43 @@ def alignPoints(pixelArray):
     #print(points)
     return points
 
+def pixelArrayGrouping(pixelArray, leafList): #This method takes the 2d Coordinates from the quad tree and groups the pixel array
+    position_hash = {pixel.getPosition(): pixel for pixel in pixelArray}
+    grouped_pixelArray = []
+    for leaf in leafList:
+        points = set(leaf.getPoints())  # Faster lookup
+        group = []
+        for point in points:
+            pixel = position_hash.get(point)
+            if pixel:
+                group.append(pixel)
+        grouped_pixelArray.append(group)  # Add group for this leaf
+    return grouped_pixelArray
+
+
+def findCenterOfMass(pixelArray):
+    numeratorX = 0
+    numeratorY = 0
+    denominator = 0
+    for x in pixelArray:
+        numeratorX += x.getPosition()[0]*x.getMass()
+        numeratorY += x.getPosition()[1]*x.getMass()
+    for x in pixelArray:
+        denominator += x.getMass()
+    com = (numeratorX/denominator, numeratorY/denominator)
+    return com
 
 def redrawQuadTree(pixelArray):
     tree = QuadTree(0, 0, resolution[0], resolution[1], alignPoints(pixelArray), screen, 0)  #Change Points to Align Points
     tree.drawPoints(5)
     tree.subDivide(0)
     array = QuadTree.helperDFS3(tree)    #Should contain all the relevant data from the struct
-    #print(f'Type: {type(array)}: Length {len(array)}')
     print(f'Type: {type(array)}: Length {len(array)}')
-    print(array[0])
-    print(array[0].getPoints())
-    print(array[0].returnCenter())
+
+    for x in array:
+        print(f'Coords: {(x.getPoints())}')
     print()
-    pygame.draw.circle(screen, (0,0,255), array[0].returnCenter(), 5)
+
     return array
 
 
@@ -48,13 +74,12 @@ def universalGravity(pixelArray, array):   #Functions as the primary driver of t
 
 
 
-    print(array)
+    #print(array)
 
     return True
 
 
-
-pixelArray = [pixel(100, (0, 40), (0, 0), 1), pixel(100, (60, 59), (0, 0), 1), pixel(100, (0, 5), (0, 0), 1), pixel(100, (0, 100), (0, 0), 1),pixel(100, (0, 450), (0, 0), 1)]
+pixelArray = [pixel(100, (0, 40), (0, 0), 1), pixel(100, (60.323, 59), (0, 0), 1), pixel(100, (0, 5), (0, 0), 1), pixel(100, (0, 100), (0, 0), 1),pixel(100, (0, 450), (0, 0), 1)]
 #p0 = pixel(10,(100, 100),0,0)
 #p1 = pixel(10,(0,0), 0,0)
 #pixel.gravity(p0, 1, p0, p1)
@@ -83,10 +108,10 @@ while running:
         if event.type == pygame.QUIT or (keys[pygame.K_LCTRL] and keys[pygame.K_c]): #Pressing Ctrl + C kills task
             running = False
 
-        #redrawQuadTree(pixelArray)
-
-        #print(len(quadTree[0][0]))
-
+        print(f'Number of Pixel present: {(len(pixelArray))}')
+        array = redrawQuadTree(pixelArray)
+        print(findCenterOfMass(pixelArray))
+        print(pixelArrayGrouping(pixelArray, array))
 
         #universalGravity(pixelArray, points)
 

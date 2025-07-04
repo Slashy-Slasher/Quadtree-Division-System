@@ -15,6 +15,9 @@ class pixel:
     def getPosition(self):
         return self.position
 
+    def getMass(self):
+        return self.mass
+
     def applyForce(self):
         self.position += self.force * self.direction
 
