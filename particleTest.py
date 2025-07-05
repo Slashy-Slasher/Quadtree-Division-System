@@ -67,42 +67,61 @@ def redrawQuadTree(pixelArray):
 
     return array
 
+
+def gravitational_calculation2(g, nested_pixel_array):
+
+    for x in nested_pixel_array:     #x represents every grouping of planets
+        for z in nested_pixel_array: #z also represents every grouping of planets
+            print()
+            if(x == z):
+                for y in x:
+                    for h in x:     #y represents every planet in a grouping
+                        if(y != h):
+                            y.gravity(g, y, h)
+                    y.applyForce()
+
+            #    for y in x:
+
+
+            print(y)
+        print()
+
+
+    return False
+
+
 def gravitational_calculation(g, nested_pixel_array):
     #Calculate the force of Gravity for everything within the leaf
     #Estimates the rest of the universal force using far off leafs
     temp_force = 0
     temp_direction = (0,0)
 
-
-
     for x in nested_pixel_array:
-        #for z in x:
-        #    if(x is not z):
+        for z in x:
+            for i in x:
+                if(z is not i):
+                    z.direction += z.getDirection(i.position)
+                    z.force += (g * i.getMass() * z.getMass())/math.dist(i.getPosition(), z.getPosition())
 
-        for y in nested_pixel_array:
-            if(x is not y):
-                temp_force += (g * pixel.return_list_mass(x) * pixel.return_list_mass(y))/math.dist(findCenterOfMass(x), findCenterOfMass(y))
-                #+temp_direction += pixel.getDirection(findCenterOfMass(x), findCenterOfMass(x))
-                #temp_direction +=
-
-        temp_force = 0
-        temp_direction = (0,0)
-
-
+                for y in nested_pixel_array:
+                    if(x is not y):
+                        z.direction += z.getDirection(findCenterOfMass(y))
+                        z.force += (g * pixel.return_list_mass(x) * pixel.return_list_mass(y))/math.dist(findCenterOfMass(x), findCenterOfMass(y))
+            z.applyForce()
     return False
 
 def universe_tick(pixelArray, array):   #Functions as the primary driver of the Barnes-Hut Simulation
     nested_pixel_array = pixelArrayGrouping(pixelArray, array) #Merges the information from the two lists together
     COM = 0                                                    #Center of Mas+s
     gravitational_constant = 1                                 #Gravitational Constant [Set to 1 by default]
-    gravitational_calculation(gravitational_constant, nested_pixel_array)
+    gravitational_calculation2(gravitational_constant, nested_pixel_array)
 
     #print(array)
 
     return True
 
 
-pixelArray = [pixel(100, (0, 40), (0, 0), 1), pixel(100, (60.323, 59), (0, 0), 1), pixel(100, (0, 5), (0, 0), 1), pixel(100, (0, 100), (0, 0), 1),pixel(100, (0, 450), (0, 0), 1)]
+pixelArray = [pixel(100, (0, 40), (0, 0), 0), pixel(1000, (60.323, 59), (0, 0), 0), pixel(100, (0, 5), (0, 0), 0), pixel(100, (0, 100), (0, 0), 0),pixel(100, (0, 450), (0, 0), 0)]
 points = [(30, 30), (30, 40), (30, 50), (40, 50), (60, 50),(65, 50), (70, 50),(63, 30), (63, 30), (190, 180), (200, 180), (180, 180), (160, 180)]
 
 redrawQuadTree(pixelArray)
@@ -116,10 +135,11 @@ while running:
         if event.type == pygame.QUIT or (keys[pygame.K_LCTRL] and keys[pygame.K_c]): #Pressing Ctrl + C kills task
             running = False
 
+        screen.fill((0, 0, 0))  # <<< Clear the screen here
         print(f'Number of Pixel present: {(len(pixelArray))}')
         array = redrawQuadTree(pixelArray)  #Draws out the quadtree and creates the game window, returns leaf array
         universe_tick(pixelArray, array)             #Runs the model of the simulation based on the leaf array
-
+        pygame.time.delay(1000)
 
 
         pygame.display.flip()
