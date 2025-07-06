@@ -1,4 +1,5 @@
 import pygame
+from dnf.util import empty
 from pygame import time
 
 
@@ -46,7 +47,7 @@ class QuadTree:
     def returnCenter(self):
         return (self.w/2, self.h/2)
 
-    def helperDFS3(node):
+    def helperDFS3(self, node):
         storage = []
         for child_getter in [node.getTLC, node.getTRC, node.getBLC, node.getBRC]:
             child = child_getter()  # Get the child node
@@ -54,35 +55,23 @@ class QuadTree:
                 if child.isLeaf():
                     storage.append(child)
                 else:
-                    storage.extend(QuadTree.helperDFS3(child))  # Flatten the result of recursion
+                    storage.extend(QuadTree.helperDFS3(self, child))  # Flatten the result of recursion
+        if storage is empty:
+            storage.extend(self.getPoints())
         return storage
 
-    def helperDFS(self, node):
-        storage = []
-        if node.getTLC() is not None:
-            if node.TLC.isLeaf():
-                storage.append(node.getTLC())
-            else:
-                storage.append(self.helperDFS(node.TLC))
 
-        if node.TRC is not None:
-            if node.TRC.isLeaf():
-                storage.append(node.getTRC())
-            else:
-                storage.append(self.helperDFS(node.TRC))
-
-        if node.BLC is not None:
-            if node.BLC.isLeaf():
-                storage.append(node.getBLC())
-            else:
-                storage.append(self.helperDFS(node.BLC))
-
-        if node.BRC is not None:
-            if node.BRC.isLeaf():
-                storage.append(node.getBRC())
-            else:
-                storage.append(self.helperDFS(node.BRC))
-        return storage
+    @staticmethod
+    def find_furthest_Point(points):
+        if(len(points) > 1):
+            minX = min(points[0])
+            minY = min(points[1])
+        else:
+            return points[0]
+        if minX > minY:
+            return minX
+        else:
+            return minY
 
     def pointsIn(self, x0, y0, x1, y1, points):
         newPoints = []
@@ -178,4 +167,5 @@ class QuadTree:
                                     self.screen, self.depth + 1)
             pygame.display.flip()
         else:
-            print("Depth Reached")
+            #print("Depth Reached")
+            var = 1 + 1
