@@ -66,6 +66,8 @@ def redrawQuadTree(pixelArray):
 
     return array
 
+
+#Testing more "efficient" method however results are varied
 def gravitational_calculation_faster(g, nested_pixel_array):
     # Step 1: Compute intra-cluster (nearby planets) brute force gravity
     for cluster in nested_pixel_array:
