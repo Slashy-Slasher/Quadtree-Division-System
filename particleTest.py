@@ -1,4 +1,5 @@
 import math
+import random
 
 from QuadTree import QuadTree
 import pygame
@@ -11,11 +12,6 @@ screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption('Barnes-Hut')
 screen.fill(backColor)
 dotSize = 3
-
-
-def updatePixels():
-    print()
-
 
 def alignPoints(pixelArray):
     points = []
@@ -36,6 +32,10 @@ def pixelArrayGrouping(pixelArray, leafList): #This method takes the 2d Coordina
             if pixel:
                 group.append(pixel)
         grouped_pixelArray.append(group)  # Add group for this leaf
+    if(len(grouped_pixelArray) < 1):
+        grouped_pixelArray.append(pixelArray)
+        print(grouped_pixelArray)
+        return grouped_pixelArray
     return grouped_pixelArray
 
 
@@ -54,26 +54,20 @@ def findCenterOfMass(pixelArray):
 def redrawQuadTree(pixelArray):
     minPoint = QuadTree.find_furthest_Point(alignPoints(pixelArray))
     maxPoint = QuadTree.find_closest_Point(alignPoints(pixelArray), resolution)
-    print(f'minPoint: {minPoint}, maxPoint: {maxPoint}')
-    #tree = QuadTree(minPoint, minPoint, resolution[0], resolution[1], alignPoints(pixelArray), screen, 0)  #Change Points to Align Points
-    tree = QuadTree(minPoint, minPoint, maxPoint, maxPoint, alignPoints(pixelArray), screen, 0)  # Change Points to Align Points
+    #print(f'minPoint: {minPoint}, maxPoint: {maxPoint}')
+    tree = QuadTree(0, 0, resolution[0], resolution[1], alignPoints(pixelArray), screen, 0)  #Change Points to Align Points
+    #tree = QuadTree(minPoint, minPoint, maxPoint, maxPoint, alignPoints(pixelArray), screen, 0)  # Change Points to Align Points
     tree.drawPoints(10)
     tree.subDivide(0)
     array = QuadTree.helperDFS3(tree, tree)    #Should contain all the relevant data from the struct
-    #print(f'Type: {type(array)}: Length {len(array)}')
-
-    #for x in array:
-    #    print(f'Coords: {(x.getPoints())}')
-    #print()
-
     return array
 
 
 #Testing more "efficient" method however results are varied
 def gravitational_calculation_faster(g, nested_pixel_array):
     # Step 1: Compute intra-cluster (nearby planets) brute force gravity
-    print(nested_pixel_array)
-    print()
+    #print(nested_pixel_array)
+    #print()
     for cluster in nested_pixel_array:
         for i, planet1 in enumerate(cluster):
             for planet2 in cluster[i+1:]:
@@ -100,7 +94,7 @@ def gravitational_calculation_faster(g, nested_pixel_array):
     for cluster in nested_pixel_array:
         for planet in cluster:
             planet.applyForce()
-
+    #print(f"PixelArray: {(nested_pixel_array)}")
     #print("Ticked Gravity")
     return "Done"
 
@@ -142,23 +136,29 @@ def gravitational_calculation(g, nested_pixel_array):
             z.applyForce()
     return False
 
+def collision_tick():
+    return False
+def pixelFactory():
+    #temp_pixel = pixel(30, resolution[0]/2 + random.randint(0, 1000), random.randint(0, 1440), (0,1), random.randint(0,4), False)
+    temp_pixel = pixel(30, (resolution[0]/2+random.randint(0, 1000), resolution[1]/2 + random.randint(-720,720)), (0, 1), random.randint(-4,4), False)
+
+    return temp_pixel
+
+
 def universe_tick(pixelArray, array):   #Functions as the primary driver of the Barnes-Hut Simulation
     nested_pixel_array = pixelArrayGrouping(pixelArray, array) #Merges the information from the two lists together
     COM = 0                                                    #Center of Mas+s
-    gravitational_constant = 6.67430e-11                       #Gravitational Constant [Set to 1 by default]
-    gravitational_calculation2(gravitational_constant, nested_pixel_array)
-
-    #print(array)
-
+    gravitational_constant = (6.67430e-11)*10000000                       #Gravitational Constant [Set to 1 by default]
+    gravitational_calculation_faster(gravitational_constant, nested_pixel_array)
     return True
 
+
 pixelArray = [
-    pixel(121.4*100, (1275.3, 738.2), (0.2, -0.1), 0, True),
-    pixel(162.8, (1290.5, 712.4), (-0.3, 0.1), 0, False),
-    pixel(89.6, (1263.1, 734.9), (0.1, -0.4),  0, False ),
-    pixel(101.2, (1293.7, 705.6), (-0.1, 0.2), 0, False),
-    #pixel(195.3, (1279.0, 720.0), (0.0, 0.0), 0, False),
-    pixel(72.5, (1301.8, 719.2), (-0.2, -0.3), 0, False)
+    pixel(200*1000, (resolution[0]/2, resolution[1]/2), (0.2, -0.1), 0, True),
+    pixel(30, (resolution[0]/2+250, 738.2), (0, 1), 2, False),
+    pixel(30, (resolution[0]/2+500, 738.2), (0, 1), 2, False),
+    pixel(30, (resolution[0] / 2 + 750, 738.2), (0, 1), 2, False),
+    pixel(30, (resolution[0] / 2 + 1000, 738.2), (0, 1), 2, False),
     ]
 
 
@@ -213,14 +213,21 @@ while running:
     start_ticks = pygame.time.get_ticks()
     array = redrawQuadTree(pixelArray)  #Draws out the quadtree and creates the game window, returns leaf array
     end_ticks = pygame.time.get_ticks()
-    print(f"Quadtree time: {(end_ticks - start_ticks)} milliseconds")
+    #print(f"Quadtree time: {(end_ticks - start_ticks)} milliseconds")
 
 
     pygame.init()
     start_ticks = pygame.time.get_ticks()
     universe_tick(pixelArray, array)             #Runs the model of the simulation based on the leaf array
     end_ticks = pygame.time.get_ticks()
-    print(f"Tick time: {(end_ticks - start_ticks)} milliseconds")
+    #print(f"Tick time: {(end_ticks - start_ticks)} milliseconds")
 
+
+
+    #pygame.init()
+    #start_ticks = pygame.time.get_ticks()
+    #collision_tick()
+    #end_ticks = pygame.time.get_ticks()
+    #print(f"Collision time: {(end_ticks - start_ticks)} milliseconds")
 
     pygame.display.flip()

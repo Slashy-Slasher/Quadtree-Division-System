@@ -23,13 +23,10 @@ class pixel:
     def getMass(self):
         return self.mass
 
-    '''
-        def vector_set(self, direction, force):
-                self.direction = direction
-                self.force = force
-                self.gForce = self.direction * self.force
-    
-    '''
+    def vector_set(self, direction, force):
+            self.direction = direction
+            self.force = force
+            self.gForce = self.direction * self.force
 
     def applyForce(self):
         #self.position = self.force * pygame.Vector2(self.direction)
@@ -56,5 +53,6 @@ class pixel:
 
     def gravity(self, g, obj0, obj1):
         self.direction = self.getDirection(obj0.position, obj1.position)    #Normalized Direction
-        self.force = (g * obj0.mass * obj1.mass) / (math.dist(obj0.position, obj1.position) ** 2) #Force
+        if(obj0.position != obj1.position):
+            self.force = (g * obj0.mass * obj1.mass) / (math.dist(obj0.position, obj1.position) ** 2) #Force
         self.gForce += (self.direction * self.force)  #Vector Created
