@@ -60,6 +60,25 @@ class QuadTree:
             storage.extend(self.getPoints())
         return storage
 
+    #This method is used to stop planets from escaping the quadtree
+    @staticmethod
+    def find_closest_Point(points, resolution):
+        if (len(points) > 1):
+            maxX = max(points[0])
+            maxY = max(points[1])
+        else:
+            return points[0]
+        if maxX > maxY:
+            if maxX > resolution[0]:
+                return maxX
+            else:
+                return resolution[0]
+        else:
+            if maxY > resolution[1]:
+                return maxY
+            else:
+                return resolution[1]
+
 
     @staticmethod
     def find_furthest_Point(points):
@@ -68,10 +87,16 @@ class QuadTree:
             minY = min(points[1])
         else:
             return points[0]
-        if minX > minY:
-            return minX
+        if minX < minY:
+            if minX < 0:
+                return minX
+            else:
+                return 0
         else:
-            return minY
+            if minY < 0:
+                return minY
+            else:
+                return 0
 
     def pointsIn(self, x0, y0, x1, y1, points):
         newPoints = []
@@ -165,7 +190,7 @@ class QuadTree:
             elif 0 <len(self.pointsIn((self.w + self.x) / 2, (self.y + self.h) / 2, self.w, self.h, self.points)) <= self.max:
                 self.BRC = QuadTree((self.w + self.x) / 2, (self.y + self.h) / 2, self.w, self.h, self.points,
                                     self.screen, self.depth + 1)
-            pygame.display.flip()
+            #pygame.display.flip() || LEAVING THIS AS A REMINDER THIS LITTLE Line was costing 44 milliseconds a tick XD
         else:
             #print("Depth Reached")
             var = 1 + 1
