@@ -5,32 +5,37 @@ import pygame
 
 
 class pixel:
-    def __init__(self, mass, position, direction, force):
+    def __init__(self, mass, position, direction, force, isLocked):
         self.mass = mass  # Mass
         self.position = position  # (x,y) Tuple
         self.direction = pygame.Vector2(direction)  # (x,y) Vector2
         self.force = force  # float value
         self.gForce = pygame.Vector2(0,0)
         self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        self.lockedState = isLocked
 
     def getPosition(self):
         return tuple(self.position)
 
+    def getlockedState(self):
+        return self.lockedState
+
     def getMass(self):
         return self.mass
 
-    def vector_set(self, direction, force):
-            self.direction = direction
-            self.force = force
-            self.gForce = self.direction * self.force
-
+    '''
+        def vector_set(self, direction, force):
+                self.direction = direction
+                self.force = force
+                self.gForce = self.direction * self.force
+    
+    '''
 
     def applyForce(self):
         #self.position = self.force * pygame.Vector2(self.direction)
-        self.position += self.gForce
-        self.gForce = pygame.Vector2(0,0)
-        self.direction = (0, 0)
-        self.force = 0
+        if not self.getlockedState():
+            self.position += self.gForce
+        #self.gForce = pygame.Vector2(0,0)
 
     def getDirection(self, p0, p1):
         p0_vec = pygame.Vector2(p0[0], p0[1])
@@ -52,6 +57,4 @@ class pixel:
     def gravity(self, g, obj0, obj1):
         self.direction = self.getDirection(obj0.position, obj1.position)    #Normalized Direction
         self.force = (g * obj0.mass * obj1.mass) / (math.dist(obj0.position, obj1.position) ** 2) #Force
-        self.gForce = (self.direction * self.force)  #Vector Created
-        self.direction = (0,0)
-        self.force = 0
+        self.gForce += (self.direction * self.force)  #Vector Created
