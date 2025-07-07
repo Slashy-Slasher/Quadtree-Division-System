@@ -1,6 +1,4 @@
 import pygame
-from dnf.util import empty
-
 
 class QuadTree:
     def __init__(self, x, y, w, h, points, screen, depth):
@@ -9,7 +7,7 @@ class QuadTree:
         self.w = w
         self.h = h
         self.points = self.pointsIn(x, y, w, h, points)
-        self.max = 3  # Defines points which can exist before square subdivision
+        self.max = 30  # Defines points which can exist before square subdivision
         self.screen = screen
         self.depth = depth
         self.TLC = None
@@ -55,8 +53,9 @@ class QuadTree:
                     storage.append(child)
                 else:
                     storage.extend(QuadTree.helperDFS3(self, child))  # Flatten the result of recursion
-        if storage is empty:
-            storage.extend(self.getPoints())
+        if len(storage) == 0:
+            #print(f'Test: {node.getPoints()}')
+            storage.append(node)
         return storage
 
     #This method is used to stop planets from escaping the quadtree
@@ -129,7 +128,7 @@ class QuadTree:
             self.root = False
             self.depth = self.depth + 1
 
-        if len(self.points) > self.max and self.depth < 10000000:
+        if len(self.points) > self.max and self.depth < 100000:
             if len(self.pointsIn(self.x, self.y, (self.x + self.w) / 2, (self.y + self.h) / 2, self.points)) > self.max:
                 self.TLC = QuadTree(self.x, self.y, (self.x + self.w) / 2, (self.y + self.h) / 2, self.points,
                                     self.screen, self.depth + 1)
