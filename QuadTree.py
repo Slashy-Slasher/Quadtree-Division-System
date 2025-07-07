@@ -1,6 +1,5 @@
 import pygame
 from dnf.util import empty
-from pygame import time
 
 
 class QuadTree:
@@ -87,7 +86,7 @@ class QuadTree:
             minY = min(points[1])
         else:
             return points[0]
-        if minX < minY:
+        if minX > minY:
             if minX < 0:
                 return minX
             else:
@@ -191,6 +190,6 @@ class QuadTree:
                 self.BRC = QuadTree((self.w + self.x) / 2, (self.y + self.h) / 2, self.w, self.h, self.points,
                                     self.screen, self.depth + 1)
             #pygame.display.flip() || LEAVING THIS AS A REMINDER THIS LITTLE Line was costing 44 milliseconds a tick XD
-        else:
-            #print("Depth Reached")
-            var = 1 + 1
+        #else:
+        #    #print("Depth Reached")
+        #    var = 1 + 1
