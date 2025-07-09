@@ -4,6 +4,7 @@ import random
 from QuadTree import QuadTree
 import pygame
 
+from Render import renderPlanets
 from pixel import pixel
 
 backColor = (255, 255, 255)
@@ -56,7 +57,7 @@ def redrawQuadTree(pixelArray):
     minPoint = QuadTree.find_furthest_Point(alignPoints(pixelArray))
     maxPoint = QuadTree.find_closest_Point(alignPoints(pixelArray), resolution)
     #print(f'minPoint: {minPoint}, maxPoint: {maxPoint}')
-    tree = QuadTree(0, 0, resolution[0], resolution[1], alignPoints(pixelArray), screen, 0)  #Change Points to Align Points
+    tree = QuadTree(-resolution[0], -resolution[1], resolution[0], resolution[1], alignPoints(pixelArray), screen, 0)  #Change Points to Align Points
     #tree = QuadTree(minPoint, minPoint, maxPoint, maxPoint, alignPoints(pixelArray), screen, 0)  # Change Points to Align Points
     #tree.drawPoints(10)
     renderPlanets(screen, pixelArray, 3)
