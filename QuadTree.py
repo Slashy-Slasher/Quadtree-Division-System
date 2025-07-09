@@ -7,7 +7,7 @@ class QuadTree:
         self.w = w
         self.h = h
         self.points = self.pointsIn(x, y, w, h, points)
-        self.max = 30  # Defines points which can exist before square subdivision
+        self.max = 40  # Defines points which can exist before square subdivision
         self.screen = screen
         self.depth = depth
         self.TLC = None
@@ -95,6 +95,25 @@ class QuadTree:
                 return minY
             else:
                 return 0
+
+    @staticmethod
+    def out_of_bounds(x, y, w, h, furthest_point):
+        if(x < furthest_point[0] < w):
+            pass
+
+
+
+
+
+
+    @staticmethod
+    def adjust_borders(furthest_point):
+        furthest_point = pygame.Vector2(furthest_point)
+        if(furthest_point[0] > ("bounds")):
+            print("")
+
+
+
 
     def pointsIn(self, x0, y0, x1, y1, points):
         newPoints = []

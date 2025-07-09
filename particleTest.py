@@ -25,6 +25,7 @@ def pixelArrayGrouping(pixelArray, leafList): #This method takes the 2d Coordina
     position_hash = {pixel.getPosition(): pixel for pixel in pixelArray}
     grouped_pixelArray = []
     for leaf in leafList:
+        #print(f'\ {type(leaf)}')
         points = set(leaf.getPoints())  # Faster lookup
         group = []
         for point in points:
@@ -34,7 +35,7 @@ def pixelArrayGrouping(pixelArray, leafList): #This method takes the 2d Coordina
         grouped_pixelArray.append(group)  # Add group for this leaf
     if(len(grouped_pixelArray) < 1):
         grouped_pixelArray.append(pixelArray)
-        print(grouped_pixelArray)
+        #print(grouped_pixelArray)
         return grouped_pixelArray
     return grouped_pixelArray
 
@@ -57,7 +58,8 @@ def redrawQuadTree(pixelArray):
     #print(f'minPoint: {minPoint}, maxPoint: {maxPoint}')
     tree = QuadTree(0, 0, resolution[0], resolution[1], alignPoints(pixelArray), screen, 0)  #Change Points to Align Points
     #tree = QuadTree(minPoint, minPoint, maxPoint, maxPoint, alignPoints(pixelArray), screen, 0)  # Change Points to Align Points
-    tree.drawPoints(10)
+    #tree.drawPoints(10)
+    renderPlanets(screen, pixelArray, 3)
     tree.subDivide(0)
     array = QuadTree.helperDFS3(tree, tree)    #Should contain all the relevant data from the struct
     return array
@@ -140,7 +142,7 @@ def collision_tick():
     return False
 def pixelFactory():
     #temp_pixel = pixel(30, resolution[0]/2 + random.randint(0, 1000), random.randint(0, 1440), (0,1), random.randint(0,4), False)
-    temp_pixel = pixel(30, (resolution[0]/2+random.randint(0, 1000), resolution[1]/2 + random.randint(-720,720)), (0, 1), random.randint(-4,4), False)
+    temp_pixel = pixel(30, (resolution[0]/2+random.randint(-1000, 1000), resolution[1]/2 + random.randint(-720,720)), (0, 1), random.randint(-4,4), False)
 
     return temp_pixel
 
@@ -199,14 +201,14 @@ while running:
     start_ticks = pygame.time.get_ticks()
     array = redrawQuadTree(pixelArray)  #Draws out the quadtree and creates the game window, returns leaf array
     end_ticks = pygame.time.get_ticks()
-    #print(f"Quadtree time: {(end_ticks - start_ticks)} milliseconds")
+    print(f"Quadtree time: {(end_ticks - start_ticks)} milliseconds")
 
 
     pygame.init()
     start_ticks = pygame.time.get_ticks()
     universe_tick(pixelArray, array)             #Runs the model of the simulation based on the leaf array
     end_ticks = pygame.time.get_ticks()
-    #print(f"Tick time: {(end_ticks - start_ticks)} milliseconds")
+    print(f"Tick time: {(end_ticks - start_ticks)} milliseconds")
 
 
 
