@@ -10,9 +10,9 @@ class QuadTree:
         self.max = 40  # Defines points which can exist before square subdivision
         self.screen = screen
         self.depth = depth
+        self.rootSize = abs(x)
         self.TLC = None
         self.TRC = None
-
         self.BLC = None
         self.BRC = None
         self.root = False
@@ -102,6 +102,14 @@ class QuadTree:
             pass
 
 
+
+    def adjust_borders2(self):
+        self.rootSize *= 2
+        self.x = self.rootSize
+        self.y = self.rootSize
+        self.w = self.rootSize
+        self.h = self.rootSize
+        return "Complete"
 
 
 

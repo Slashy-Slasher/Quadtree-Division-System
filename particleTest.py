@@ -8,11 +8,12 @@ from Render import renderPlanets
 from pixel import pixel
 
 backColor = (255, 255, 255)
-resolution = (width, height) = (2560, 1440)   #This doesn't play with all systems well, but works as a test
+resolution = (width, height) = (2000, 2000)   #This doesn't play with all systems well, but works as a test
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption('Barnes-Hut')
 screen.fill(backColor)
 dotSize = 3
+SIZE = 4000
 
 def alignPoints(pixelArray):
     points = []
@@ -50,20 +51,24 @@ def findCenterOfMass(pixelArray):
         numeratorY += x.getPosition()[1]*x.getMass()
     for x in pixelArray:
         denominator += x.getMass()
+    print(denominator)
     com = (numeratorX/denominator, numeratorY/denominator)
     return com
 
-def redrawQuadTree(pixelArray):
+def redrawQuadTree(pixelArray, size):
     minPoint = QuadTree.find_furthest_Point(alignPoints(pixelArray))
     maxPoint = QuadTree.find_closest_Point(alignPoints(pixelArray), resolution)
     #print(f'minPoint: {minPoint}, maxPoint: {maxPoint}')
-    tree = QuadTree(-resolution[0], -resolution[1], resolution[0], resolution[1], alignPoints(pixelArray), screen, 0)  #Change Points to Align Points
+    #tree = QuadTree(-resolution[0], -resolution[1], resolution[0], resolution[1], alignPoints(pixelArray), screen, 0)  #Change Points to Align Points
+    tree = QuadTree(-size, -size, size, size, alignPoints(pixelArray), screen,0)  # Change Points to Align Points
+    #.tree.adjust_borders2()
+    print(tree.rootSize)
     #tree = QuadTree(minPoint, minPoint, maxPoint, maxPoint, alignPoints(pixelArray), screen, 0)  # Change Points to Align Points
     #tree.drawPoints(10)
     renderPlanets(screen, pixelArray, 3)
     tree.subDivide(0)
     array = QuadTree.helperDFS3(tree, tree)    #Should contain all the relevant data from the struct
-    return array
+    return array,tree.rootSize
 
 
 #Testing more "efficient" method however results are varied
@@ -164,7 +169,7 @@ pixelArray = [
     pixel(30, (resolution[0] / 2 + 1000, 738.2), (0, 1), 2, False),
     ]
 
-for x in range(1000):
+for x in range(500):
     pixelArray.append(pixelFactory())
 
 
@@ -200,7 +205,8 @@ while running:
     #print(f'Number of Pixel present: {(len(pixelArray))}')
     pygame.init()
     start_ticks = pygame.time.get_ticks()
-    array = redrawQuadTree(pixelArray)  #Draws out the quadtree and creates the game window, returns leaf array
+    array, rootSize = redrawQuadTree(pixelArray, SIZE)  #Draws out the quadtree and creates the game window, returns leaf array
+    SIZE = rootSize
     end_ticks = pygame.time.get_ticks()
     print(f"Quadtree time: {(end_ticks - start_ticks)} milliseconds")
 
