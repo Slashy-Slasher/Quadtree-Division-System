@@ -1,5 +1,6 @@
 import math
 import random
+from time import sleep
 
 from QuadTree import QuadTree
 import pygame
@@ -77,7 +78,7 @@ def gravitational_calculation_faster(g, nested_pixel_array):
     for cluster in nested_pixel_array:
         com_mass = pixel.return_list_mass(cluster)
         com_pos = findCenterOfMass(cluster)
-        cluster_coms.append(pixel(com_mass, com_pos, (0,0), 0, (0,0,0), False))
+        cluster_coms.append(pixel(com_mass, com_pos, (0,0), 0, (0,0,0), 0,False))
 
     # Apply gravity between clusters
     for i, cluster_x in enumerate(nested_pixel_array):
@@ -94,43 +95,16 @@ def gravitational_calculation_faster(g, nested_pixel_array):
     #print(f"PixelArray: {(nested_pixel_array)}")
     #print("Ticked Gravity")
     return "Done"
-
-def gravitational_calculation2(g, nested_pixel_array):
-    for x in nested_pixel_array:     #x represents every grouping of planets
-        for z in nested_pixel_array: #z also represents every grouping of planets
-            for y in x:
-                if(x == z):             #For nearby planets, we brute-force the calculation
-                    for h in x:     #y represents every planet in a grouping
-                        if(y != h):
-                            y.gravity(g, y, h)
-                if(x != z):             #For far off planets, we estimate based on COM and go from there
-                    for y in x:
-                        tempPixel = pixel(pixel.return_list_mass(z), findCenterOfMass(z)
-                                          , (0, 0), 0, False)  #Creates a temporary planet obj to utilize easy gravity
-                        y.gravity(g, y, tempPixel)  #Applies force on y
-                y.applyForce()
-            #print("Ticked Gravity")
-
-    #for x in nested_pixel_array:    #Runs through at the end and applies the calculated for to all items in the pixelArray
-    #    for y in x:
-    #        y.applyForce()      #Applies for to each planet
-    return "Done"
-
-def gravitational_calculation(g, nested_pixel_array):
-    #Calculate the force of Gravity for everything within the leaf
-    #Estimates the rest of the universal force using far off leafs
-    for x in nested_pixel_array:
-        for z in x:
-            for i in x:
-                if(z is not i):
-                    z.direction += z.getDirection(i.position)
-                    z.force += (g * i.getMass() * z.getMass())/math.dist(i.getPosition(), z.getPosition())
-
-                for y in nested_pixel_array:
-                    if(x is not y):
-                        z.direction += z.getDirection(findCenterOfMass(y))
-                        z.force += (g * pixel.return_list_mass(x) * pixel.return_list_mass(y))/math.dist(findCenterOfMass(x), findCenterOfMass(y))
-            z.applyForce()
+def collision_tick(nested_pixel_array):
+    for sector in nested_pixel_array:
+        for planet in sector:
+            for planet2 in sector:
+                if planet != planet2:
+                    closest_planet = min(sector, key=lambda planet: math.dist(planet.getPosition(), planet2.getPosition()))
+                    print(f'Current Planet:{planet.getPosition()} -- Closest Planet: {closest_planet.getPosition()}')
+                    if(math.dist(planet.getPosition(), closest_planet.getPosition()) < planet.radius):
+                        print("Collision Detected")
+                        pygame.time.wait(1000)
     return False
 
 
@@ -143,18 +117,28 @@ def gravitational_calculation(g, nested_pixel_array):
 def universe_tick(pixelArray, array):   #Functions as the primary driver of the Barnes-Hut Simulation
     nested_pixel_array = pixelArrayGrouping(pixelArray, array) #Merges the information from the two lists together
     COM = 0                                                    #Center of Mas+s
+    #gravitational_constant = 6.67430e-11
     gravitational_constant = (6.67430e-11)*10000000                       #Gravitational Constant [Set to 1 by default]
     gravitational_calculation_faster(gravitational_constant, nested_pixel_array)
+    collision_tick(nested_pixel_array)
     return True
 
 
 pixelArray = [
-    pixel(200*100000, (resolution[0]/2, resolution[1]/2), (0.2, -0.1), 0, (255,0,0), True),
-    pixel(30, (resolution[0]/2+250, 738.2), (0, 1), 2, (255,0,0),False),
-    pixel(30, (resolution[0]/2+500, 738.2), (0, 1), 2, (255,0,0),False),
-    pixel(30, (resolution[0] / 2 + 750, 738.2), (0, 1), 2, (255,0,0),False),
-    pixel(30, (resolution[0] / 2 + 1000, 738.2), (0, 1), 2, (255,0,0),False),
+        pixel(200*1000, (resolution[0]/2, resolution[1]/2), (0,0), 0, (255,0,0), 10, True),
+        pixel(30, (resolution[0]/2+250, resolution[1]/2), (0, 1), 4, (255,0,0),5, False),
+        pixel(30, (resolution[0]/2+500,      resolution[1]/2), (0, 1), 2, (255,0,0),5, False),
+
     ]
+
+
+#pixelArray = [
+#    pixel(200*1000, (resolution[0]/2, resolution[1]/2), (0.2, -0.1), 0, (255,0,0), 10, True),
+#    pixel(30, (resolution[0]/2+250, resolution[1]/2), (0, 1), 5, (255,0,0),5, False),
+#    pixel(30, (resolution[0]/2+500,      resolution[1]/2), (0, 1), 2, (255,0,0),5, False),
+#    pixel(30, (resolution[0] / 2 + 750,  resolution[1]/2), (0, 1), 2, (255,0,0),5, False),
+#    pixel(30, (resolution[0] / 2 + 1000, resolution[1]/2), (0, 1), 2, (255,0,0),5, False),
+#    ]
 
 #for x in range(500):
 #    pixelArray.append(pixelFactory())
@@ -185,6 +169,9 @@ while running:
     #print(f'Number of Pixel present: {(len(pixelArray))}')
     pygame.init()
     start_ticks = pygame.time.get_ticks()
+    print()
+    print(pixelArray[0].color)
+
     array, rootSize = redrawQuadTree(pixelArray, SIZE)  #Draws out the quadtree and creates the game window, returns leaf array
     SIZE = rootSize
     end_ticks = pygame.time.get_ticks()
@@ -196,8 +183,9 @@ while running:
     universe_tick(pixelArray, array)             #Runs the model of the simulation based on the leaf array
     end_ticks = pygame.time.get_ticks()
     print(f"Tick time: {(end_ticks - start_ticks)} milliseconds")
-
-
+    print()
+    print(pixelArray[0].color)
+    #pygame.time.delay(1000)
 
     #pygame.init()
     #start_ticks = pygame.time.get_ticks()
