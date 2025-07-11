@@ -1,3 +1,5 @@
+import math
+
 import pygame
 
 class QuadTree:
@@ -96,22 +98,30 @@ class QuadTree:
             else:
                 return 0
 
-    @staticmethod
-    def out_of_bounds(x, y, w, h, furthest_point):
-        if(x < furthest_point[0] < w):
-            pass
+    def find_furthest_point_from_center(self, pixelArray):
+        return max(pixelArray, key=lambda x: pygame.math.Vector2(x.position).length())
+        #tempFurthestPoint = (0,0)
+        #for x in pixelArray:
+        #    xdistance = math.dist((0,0), x.position)
+        #    if(pygame.Vector2(xdistance).length() > pygame.Vector2(tempFurthestPoint).length()):
+        #        tempFurthestPoint = xdistance
+
+
+    def out_of_bounds(self, pixelArray):
+        furthest_point = (self.find_furthest_point_from_center(pixelArray)).position
+        print(f'{furthest_point}')
+        if not(-self.rootSize < furthest_point[0] < self.rootSize and -self.rootSize < furthest_point[1] < self.rootSize):
+            self.adjust_borders2()
 
 
 
     def adjust_borders2(self):
         self.rootSize *= 2
-        self.x = self.rootSize
-        self.y = self.rootSize
+        self.x = -self.rootSize
+        self.y = -self.rootSize
         self.w = self.rootSize
         self.h = self.rootSize
         return "Complete"
-
-
 
 
     @staticmethod

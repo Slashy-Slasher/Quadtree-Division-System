@@ -13,7 +13,7 @@ screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption('Barnes-Hut')
 screen.fill(backColor)
 dotSize = 3
-SIZE = 4000
+SIZE = 2000
 
 def alignPoints(pixelArray):
     points = []
@@ -51,17 +51,18 @@ def findCenterOfMass(pixelArray):
         numeratorY += x.getPosition()[1]*x.getMass()
     for x in pixelArray:
         denominator += x.getMass()
-    print(denominator)
+
     com = (numeratorX/denominator, numeratorY/denominator)
     return com
 
 def redrawQuadTree(pixelArray, size):
-    minPoint = QuadTree.find_furthest_Point(alignPoints(pixelArray))
-    maxPoint = QuadTree.find_closest_Point(alignPoints(pixelArray), resolution)
+    #minPoint = QuadTree.find_furthest_Point(alignPoints(pixelArray))
+    #maxPoint = QuadTree.find_closest_Point(alignPoints(pixelArray), resolution)
     #print(f'minPoint: {minPoint}, maxPoint: {maxPoint}')
     #tree = QuadTree(-resolution[0], -resolution[1], resolution[0], resolution[1], alignPoints(pixelArray), screen, 0)  #Change Points to Align Points
     tree = QuadTree(-size, -size, size, size, alignPoints(pixelArray), screen,0)  # Change Points to Align Points
-    #.tree.adjust_borders2()
+    #print(tree.find_furthest_point_from_center(pixelArray).position)
+    tree.out_of_bounds(pixelArray)
     print(tree.rootSize)
     #tree = QuadTree(minPoint, minPoint, maxPoint, maxPoint, alignPoints(pixelArray), screen, 0)  # Change Points to Align Points
     #tree.drawPoints(10)
@@ -88,7 +89,7 @@ def gravitational_calculation_faster(g, nested_pixel_array):
     for cluster in nested_pixel_array:
         com_mass = pixel.return_list_mass(cluster)
         com_pos = findCenterOfMass(cluster)
-        cluster_coms.append(pixel(com_mass, com_pos, (0,0), 0, False))
+        cluster_coms.append(pixel(com_mass, com_pos, (0,0), 0, (0,0,0), False))
 
     # Apply gravity between clusters
     for i, cluster_x in enumerate(nested_pixel_array):
@@ -146,6 +147,7 @@ def gravitational_calculation(g, nested_pixel_array):
 
 def collision_tick():
     return False
+
 def pixelFactory():
     #temp_pixel = pixel(30, resolution[0]/2 + random.randint(0, 1000), random.randint(0, 1440), (0,1), random.randint(0,4), False)
     temp_pixel = pixel(30, (resolution[0]/2+random.randint(-1000, 1000), resolution[1]/2 + random.randint(-720,720)), (0, 1), random.randint(-4,4), (random.randint(0, 255),random.randint(0, 255),random.randint(0, 255)),False)
@@ -168,8 +170,9 @@ pixelArray = [
     pixel(30, (resolution[0] / 2 + 1000, 738.2), (0, 1), 2, (255,0,0),False),
     ]
 
-for x in range(500):
-    pixelArray.append(pixelFactory())
+#for x in range(500):
+#    pixelArray.append(pixelFactory())
+#    pixelArray.append(pixelFactory())
 
 
 
