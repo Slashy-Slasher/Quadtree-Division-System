@@ -19,15 +19,12 @@ def alignPoints(pixelArray):
     points = []
     for x in pixelArray:
         points.append(x.getPosition())
-    #print(pixelArray)
-    #print(points)
     return points
 
 def pixelArrayGrouping(pixelArray, leafList): #This method takes the 2d Coordinates from the quad tree and groups the pixel array
     position_hash = {pixel.getPosition(): pixel for pixel in pixelArray}
     grouped_pixelArray = []
     for leaf in leafList:
-        #print(f'\ {type(leaf)}')
         points = set(leaf.getPoints())  # Faster lookup
         group = []
         for point in points:
@@ -37,7 +34,6 @@ def pixelArrayGrouping(pixelArray, leafList): #This method takes the 2d Coordina
         grouped_pixelArray.append(group)  # Add group for this leaf
     if(len(grouped_pixelArray) < 1):
         grouped_pixelArray.append(pixelArray)
-        #print(grouped_pixelArray)
         return grouped_pixelArray
     return grouped_pixelArray
 
@@ -51,22 +47,14 @@ def findCenterOfMass(pixelArray):
         numeratorY += x.getPosition()[1]*x.getMass()
     for x in pixelArray:
         denominator += x.getMass()
-
     com = (numeratorX/denominator, numeratorY/denominator)
     return com
 
 def redrawQuadTree(pixelArray, size):
-    #minPoint = QuadTree.find_furthest_Point(alignPoints(pixelArray))
-    #maxPoint = QuadTree.find_closest_Point(alignPoints(pixelArray), resolution)
-    #print(f'minPoint: {minPoint}, maxPoint: {maxPoint}')
     #tree = QuadTree(-resolution[0], -resolution[1], resolution[0], resolution[1], alignPoints(pixelArray), screen, 0)  #Change Points to Align Points
     tree = QuadTree(-size, -size, size, size, alignPoints(pixelArray), screen,0)  # Change Points to Align Points
-    #print(tree.find_furthest_point_from_center(pixelArray).position)
     tree.out_of_bounds(pixelArray)
-    print(tree.rootSize)
-    #tree = QuadTree(minPoint, minPoint, maxPoint, maxPoint, alignPoints(pixelArray), screen, 0)  # Change Points to Align Points
-    #tree.drawPoints(10)
-    renderPlanets(screen, pixelArray, 3)
+    renderPlanets(screen, pixelArray, 3, pygame.Vector2(0, 0))
     tree.subDivide(0)
     array = QuadTree.helperDFS3(tree, tree)    #Should contain all the relevant data from the struct
     return array,tree.rootSize
@@ -145,13 +133,11 @@ def gravitational_calculation(g, nested_pixel_array):
             z.applyForce()
     return False
 
-def collision_tick():
-    return False
 
-def pixelFactory():
-    #temp_pixel = pixel(30, resolution[0]/2 + random.randint(0, 1000), random.randint(0, 1440), (0,1), random.randint(0,4), False)
-    temp_pixel = pixel(30, (resolution[0]/2+random.randint(-1000, 1000), resolution[1]/2 + random.randint(-720,720)), (0, 1), random.randint(-4,4), (random.randint(0, 255),random.randint(0, 255),random.randint(0, 255)),False)
-    return temp_pixel
+#def pixelFactory():
+#    #temp_pixel = pixel(30, resolution[0]/2 + random.randint(0, 1000), random.randint(0, 1440), (0,1), random.randint(0,4), False)
+#    temp_pixel = pixel(30, (resolution[0]/2+random.randint(-1000, 1000), resolution[1]/2 + random.randint(-720,720)), (0, 1), random.randint(-4,4), (random.randint(0, 255),random.randint(0, 255),random.randint(0, 255)),False)
+#    return temp_pixel
 
 
 def universe_tick(pixelArray, array):   #Functions as the primary driver of the Barnes-Hut Simulation
@@ -174,21 +160,13 @@ pixelArray = [
 #    pixelArray.append(pixelFactory())
 #    pixelArray.append(pixelFactory())
 
-
-
-
-
-
-
 #pixelArray = [
-#    pixel(121.4*100, (1275.3, 738.2), (0.2, -0.1), 0, True),
-#    pixel(162.8, (1290.5, 712.4), (.5, .5), .02, False),
-#    pixel(89.6, (1263.1, 734.9), (0.1, -0.4),  0, False ),
-#    pixel(101.2, (1293.7, 705.6), (-0.1, 0.2), 0, False),
-#    pixel(195.3, (1279.0, 720.0), (0.0, 0.0), 0, False),
-#    pixel(72.5, (1301.8, 719.2), (-0.2, -0.3), 0, False)
+#    pixel(1.9891* 10**30, (resolution[0]/2, resolution[1]/2), (0, 0), 0, (255,255,0), 150, True),
+#    pixel(5.972 * 10**24, (resolution[0]/2+500000, resolution[1]/2), (0, 1), 10, (0,123,123),50, False),
+#    pixel(7.34767309 * 10**22, (resolution[0]/2+552, resolution[1]/2), (0, 1), 1, (255,255,255), 27/2,False),
+#    #pixel(30, (resolution[0] / 2 + 750, 738.2), (0, 1), 2, (255,0,0),False),
+#    #pixel(30, (resolution[0] / 2 + 1000, 738.2), (0, 1), 2, (255,0,0),False),
 #    ]
-
 
 
 for x in pixelArray:    #Initializes the force vectors
