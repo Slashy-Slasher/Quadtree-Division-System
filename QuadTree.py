@@ -9,7 +9,7 @@ class QuadTree:
         self.w = w
         self.h = h
         self.points = self.pointsIn(x, y, w, h, points)
-        self.max = 40  # Defines points which can exist before square subdivision
+        self.max = 2  # Defines points which can exist before square subdivision
         self.screen = screen
         self.depth = depth
         self.rootSize = abs(x)
@@ -100,12 +100,6 @@ class QuadTree:
 
     def find_furthest_point_from_center(self, pixelArray):
         return max(pixelArray, key=lambda x: pygame.math.Vector2(x.position).length())
-        #tempFurthestPoint = (0,0)
-        #for x in pixelArray:
-        #    xdistance = math.dist((0,0), x.position)
-        #    if(pygame.Vector2(xdistance).length() > pygame.Vector2(tempFurthestPoint).length()):
-        #        tempFurthestPoint = xdistance
-
 
     def out_of_bounds(self, pixelArray):
         furthest_point = (self.find_furthest_point_from_center(pixelArray)).position
