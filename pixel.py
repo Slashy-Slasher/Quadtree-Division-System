@@ -5,11 +5,12 @@ import pygame
 
 
 class pixel:
-    def __init__(self, mass, position, direction, force, isLocked):
+    def __init__(self, mass, position, direction, force, color, isLocked):
         self.mass = mass  # Mass
         self.position = position  # (x,y) Tuple
         self.direction = pygame.Vector2(direction)  # (x,y) Vector2
         self.force = force  # float value
+        self.color = color
         self.gForce = pygame.Vector2(0,0)
         self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
         self.lockedState = isLocked
@@ -51,8 +52,16 @@ class pixel:
             temp_mass += x.getMass()
         return temp_mass
 
+
+    #def collision(self, pixel_array):
+    #    for x in pixel_array:
+
+
+
     def gravity(self, g, obj0, obj1):
         self.direction = self.getDirection(obj0.position, obj1.position)    #Normalized Direction
         if(obj0.position != obj1.position):
             self.force = (g * obj0.mass * obj1.mass) / (math.dist(obj0.position, obj1.position) ** 2) #Force
         self.gForce += (self.direction * self.force)  #Vector Created
+
+

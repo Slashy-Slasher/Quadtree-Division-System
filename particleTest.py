@@ -148,8 +148,7 @@ def collision_tick():
     return False
 def pixelFactory():
     #temp_pixel = pixel(30, resolution[0]/2 + random.randint(0, 1000), random.randint(0, 1440), (0,1), random.randint(0,4), False)
-    temp_pixel = pixel(30, (resolution[0]/2+random.randint(-1000, 1000), resolution[1]/2 + random.randint(-720,720)), (0, 1), random.randint(-4,4), False)
-
+    temp_pixel = pixel(30, (resolution[0]/2+random.randint(-1000, 1000), resolution[1]/2 + random.randint(-720,720)), (0, 1), random.randint(-4,4), (random.randint(0, 255),random.randint(0, 255),random.randint(0, 255)),False)
     return temp_pixel
 
 
@@ -162,11 +161,11 @@ def universe_tick(pixelArray, array):   #Functions as the primary driver of the 
 
 
 pixelArray = [
-    pixel(200*1000, (resolution[0]/2, resolution[1]/2), (0.2, -0.1), 0, True),
-    pixel(30, (resolution[0]/2+250, 738.2), (0, 1), 2, False),
-    pixel(30, (resolution[0]/2+500, 738.2), (0, 1), 2, False),
-    pixel(30, (resolution[0] / 2 + 750, 738.2), (0, 1), 2, False),
-    pixel(30, (resolution[0] / 2 + 1000, 738.2), (0, 1), 2, False),
+    pixel(200*100000, (resolution[0]/2, resolution[1]/2), (0.2, -0.1), 0, (255,0,0), True),
+    pixel(30, (resolution[0]/2+250, 738.2), (0, 1), 2, (255,0,0),False),
+    pixel(30, (resolution[0]/2+500, 738.2), (0, 1), 2, (255,0,0),False),
+    pixel(30, (resolution[0] / 2 + 750, 738.2), (0, 1), 2, (255,0,0),False),
+    pixel(30, (resolution[0] / 2 + 1000, 738.2), (0, 1), 2, (255,0,0),False),
     ]
 
 for x in range(500):
