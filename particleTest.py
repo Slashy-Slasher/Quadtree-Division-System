@@ -95,17 +95,25 @@ def gravitational_calculation_faster(g, nested_pixel_array):
     #print(f"PixelArray: {(nested_pixel_array)}")
     #print("Ticked Gravity")
     return "Done"
+
 def collision_tick(nested_pixel_array):
     for sector in nested_pixel_array:
         for planet in sector:
             for planet2 in sector:
                 if planet != planet2:
                     closest_planet = min(sector, key=lambda planet: math.dist(planet.getPosition(), planet2.getPosition()))
-                    print(f'Current Planet:{planet.getPosition()} -- Closest Planet: {closest_planet.getPosition()}')
-                    if(math.dist(planet.getPosition(), closest_planet.getPosition()) < planet.radius):
+                    #print(math.dist(planet.getPosition(), closest_planet.getPosition()))
+                    if(math.dist(planet.getPosition(), closest_planet.getPosition()) < (planet.radius + closest_planet.radius)):
                         print("Collision Detected")
-                        pygame.time.wait(1000)
-    return False
+                        #Write code here which will delete the planet with the smaller mass
+                        if planet.mass < closest_planet.mass:
+                            if planet in sector:
+                                sector.remove(planet)
+                        else:
+                            if closest_planet in sector:
+                                sector.remove(closest_planet)
+                        #pygame.time.wait(1000)
+    return nested_pixel_array
 
 
 #def pixelFactory():
@@ -116,6 +124,15 @@ def collision_tick(nested_pixel_array):
 
 def universe_tick(pixelArray, array):   #Functions as the primary driver of the Barnes-Hut Simulation
     nested_pixel_array = pixelArrayGrouping(pixelArray, array) #Merges the information from the two lists together
+    #print(len(nested_pixel_array))
+    ##print("-------------------------------------------------")
+    ##for x in nested_pixel_array:
+    ##    print(f'Pixel Array {x}')
+    ##    print("\n")
+    ##print("\n")
+##
+#    #print("-------------------------------------------------")
+    #pygame.time.wait(10000)
     COM = 0                                                    #Center of Mas+s
     #gravitational_constant = 6.67430e-11
     gravitational_constant = (6.67430e-11)*10000000                       #Gravitational Constant [Set to 1 by default]
@@ -125,10 +142,9 @@ def universe_tick(pixelArray, array):   #Functions as the primary driver of the 
 
 
 pixelArray = [
-        pixel(200*1000, (resolution[0]/2, resolution[1]/2), (0,0), 0, (255,0,0), 10, True),
-        pixel(30, (resolution[0]/2+250, resolution[1]/2), (0, 1), 4, (255,0,0),5, False),
+        pixel(200*1000, (resolution[0]/2, resolution[1]/2-2), (0,0), 0, (255,0,0), 10, True),
+        pixel(30, (resolution[0]/2+100, resolution[1]/2), (0, 1), 0, (255,0,0),5, False),
         pixel(30, (resolution[0]/2+500,      resolution[1]/2), (0, 1), 2, (255,0,0),5, False),
-
     ]
 
 
@@ -169,22 +185,21 @@ while running:
     #print(f'Number of Pixel present: {(len(pixelArray))}')
     pygame.init()
     start_ticks = pygame.time.get_ticks()
-    print()
-    print(pixelArray[0].color)
+    #print()
+    #print(pixelArray[0].color)
 
     array, rootSize = redrawQuadTree(pixelArray, SIZE)  #Draws out the quadtree and creates the game window, returns leaf array
     SIZE = rootSize
     end_ticks = pygame.time.get_ticks()
-    print(f"Quadtree time: {(end_ticks - start_ticks)} milliseconds")
-
+    #print(f"Quadtree time: {(end_ticks - start_ticks)} milliseconds")
 
     pygame.init()
     start_ticks = pygame.time.get_ticks()
     universe_tick(pixelArray, array)             #Runs the model of the simulation based on the leaf array
     end_ticks = pygame.time.get_ticks()
-    print(f"Tick time: {(end_ticks - start_ticks)} milliseconds")
-    print()
-    print(pixelArray[0].color)
+    #print(f"Tick time: {(end_ticks - start_ticks)} milliseconds")
+    #print()
+    #print(pixelArray[0].color)
     #pygame.time.delay(1000)
 
     #pygame.init()

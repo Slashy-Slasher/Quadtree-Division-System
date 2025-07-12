@@ -103,7 +103,7 @@ class QuadTree:
 
     def out_of_bounds(self, pixelArray):
         furthest_point = (self.find_furthest_point_from_center(pixelArray)).position
-        print(f'{furthest_point}')
+        #print(f'{furthest_point}')
         if not(-self.rootSize < furthest_point[0] < self.rootSize and -self.rootSize < furthest_point[1] < self.rootSize):
             self.adjust_borders2()
 
@@ -150,6 +150,11 @@ class QuadTree:
     def drawPoints(self, dotSize):
         for x in self.points:
             pygame.draw.ellipse(self.screen, (255, 0, 0), (x[0] - dotSize / 2, x[1] - dotSize / 2, dotSize, dotSize))
+
+    def drawTree(self):
+        return "Complete"
+
+
 
     def subDivide(self, sleeptime):
         pygame.time.delay(sleeptime)
