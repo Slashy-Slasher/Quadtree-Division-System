@@ -3,16 +3,17 @@ import math
 import pygame
 
 class QuadTree:
-    def __init__(self, x, y, w, h, points, screen, depth):
+    def __init__(self, x, y, w, h, points, screen, depth, rendering):
         self.x = x
         self.y = y
         self.w = w
         self.h = h
         self.points = self.pointsIn(x, y, w, h, points)
-        self.max = 2  # Defines points which can exist before square subdivision
+        self.max = 3  # Defines points which can exist before square subdivision
         self.screen = screen
         self.depth = depth
         self.rootSize = abs(x)
+        self.rendering = rendering
         self.TLC = None
         self.TRC = None
         self.BLC = None
@@ -159,7 +160,8 @@ class QuadTree:
     def subDivide(self, sleeptime):
         pygame.time.delay(sleeptime)
         if len(self.points) > self.max and self.root is True:
-            self.drawLines2(self, 3)
+            if(self.rendering):
+                self.drawLines2(self, 3)
             #self.drawLines(self.screen, (self.w/2, self.y), (self.w/2, self.h),(self.x,self.h/2),(self.w,self.h/2))
             self.root = False
             self.depth = self.depth + 1
@@ -167,25 +169,27 @@ class QuadTree:
         if len(self.points) > self.max and self.depth < 100000:
             if len(self.pointsIn(self.x, self.y, (self.x + self.w) / 2, (self.y + self.h) / 2, self.points)) > self.max:
                 self.TLC = QuadTree(self.x, self.y, (self.x + self.w) / 2, (self.y + self.h) / 2, self.points,
-                                    self.screen, self.depth + 1)
+                                    self.screen, self.depth + 1, self.rendering)
                 self.TLC.subDivide(sleeptime)
-                self.drawLines(self.screen,
+                if (self.rendering):
+                    self.drawLines(self.screen,
                                ((self.TLC.w + self.TLC.x) / 2, self.TLC.y),
                                ((self.TLC.w + self.TLC.x) / 2, self.TLC.h),
                                (self.TLC.x, (self.TLC.y + self.TLC.h) / 2),
                                (self.TLC.w, (self.TLC.y + self.TLC.h) / 2))
             elif 0 < len(self.pointsIn(self.x, self.y, (self.x + self.w) / 2, (self.y + self.h) / 2, self.points)) <= self.max:
                 self.TLC = QuadTree(self.x, self.y, (self.x + self.w) / 2, (self.y + self.h) / 2, self.points,
-                                    self.screen, self.depth + 1)
+                                    self.screen, self.depth + 1, self.rendering)
 
 
 
             if len(self.pointsIn((self.w + self.x) / 2, self.y, self.w, (self.y + self.h) / 2,
                                  self.points)) > self.max:  # w/2
                 self.TRC = QuadTree((self.w + self.x) / 2, self.y, self.w, (self.y + self.h) / 2, self.points,
-                                    self.screen, self.depth + 1)
+                                    self.screen, self.depth + 1, self.rendering)
                 self.TRC.subDivide(sleeptime)
-                self.drawLines(self.screen,
+                if (self.rendering):
+                    self.drawLines(self.screen,
                                ((self.TRC.w + self.TRC.x) / 2, self.TRC.y),
                                ((self.TRC.w + self.TRC.x) / 2, self.TRC.h),
                                (self.TRC.x, (self.TRC.h + self.TRC.y) / 2),
@@ -193,37 +197,39 @@ class QuadTree:
             elif 0 <len(self.pointsIn((self.w + self.x) / 2, self.y, self.w, (self.y + self.h) / 2,
                                  self.points)) <= self.max:  # w/2
                 self.TRC = QuadTree((self.w + self.x) / 2, self.y, self.w, (self.y + self.h) / 2, self.points,
-                                    self.screen, self.depth + 1)
+                                    self.screen, self.depth + 1, self.rendering)
 
 
             if len(self.pointsIn(self.x, (self.y + self.h) / 2, (self.x + self.w) / 2, self.h,
                                  self.points)) > self.max:  # h/2
                 self.BLC = QuadTree(self.x, (self.y + self.h) / 2, (self.x + self.w) / 2, self.h, self.points,
-                                    self.screen, self.depth + 1)
+                                    self.screen, self.depth + 1, self.rendering)
                 self.BLC.subDivide(sleeptime)
-                self.drawLines(self.screen,
-                               ((self.BLC.w + self.BLC.x) / 2, self.BLC.y),
-                               ((self.BLC.w + self.BLC.x) / 2, self.BLC.h),
-                               (self.BLC.x, (self.BLC.h + self.BLC.y) / 2),
-                               (self.BLC.w, (self.BLC.h + self.BLC.y) / 2))
+                if (self.rendering):
+                    self.drawLines(self.screen,
+                                   ((self.BLC.w + self.BLC.x) / 2, self.BLC.y),
+                                   ((self.BLC.w + self.BLC.x) / 2, self.BLC.h),
+                                   (self.BLC.x, (self.BLC.h + self.BLC.y) / 2),
+                                   (self.BLC.w, (self.BLC.h + self.BLC.y) / 2))
             elif 0 <len(self.pointsIn(self.x, (self.y + self.h) / 2, (self.x + self.w) / 2, self.h,
                                  self.points)) <= self.max:  # h/2
                 self.BLC = QuadTree(self.x, (self.y + self.h) / 2, (self.x + self.w) / 2, self.h, self.points,
-                                    self.screen, self.depth + 1)
+                                    self.screen, self.depth + 1, self.rendering)
 
 
             if len(self.pointsIn((self.w + self.x) / 2, (self.y + self.h) / 2, self.w, self.h, self.points)) > self.max:
                 self.BRC = QuadTree((self.w + self.x) / 2, (self.y + self.h) / 2, self.w, self.h, self.points,
-                                    self.screen, self.depth + 1)
+                                    self.screen, self.depth + 1, self.rendering)
                 self.BRC.subDivide(sleeptime)
-                self.drawLines(self.screen,
-                               ((self.BRC.w + self.BRC.x) / 2, self.BRC.y),
-                               ((self.BRC.w + self.BRC.x) / 2, self.BRC.h),
-                               (self.BRC.x, self.BRC.h / 2 + self.BRC.y / 2),
-                               (self.BRC.w, (self.BRC.h / 2 + self.BRC.y / 2)))
+                if (self.rendering):
+                    self.drawLines(self.screen,
+                                   ((self.BRC.w + self.BRC.x) / 2, self.BRC.y),
+                                   ((self.BRC.w + self.BRC.x) / 2, self.BRC.h),
+                                   (self.BRC.x, self.BRC.h / 2 + self.BRC.y / 2),
+                                   (self.BRC.w, (self.BRC.h / 2 + self.BRC.y / 2)))
             elif 0 <len(self.pointsIn((self.w + self.x) / 2, (self.y + self.h) / 2, self.w, self.h, self.points)) <= self.max:
                 self.BRC = QuadTree((self.w + self.x) / 2, (self.y + self.h) / 2, self.w, self.h, self.points,
-                                    self.screen, self.depth + 1)
+                                    self.screen, self.depth + 1, self.rendering)
             #pygame.display.flip() || LEAVING THIS AS A REMINDER THIS LITTLE Line was costing 44 milliseconds a tick XD
         #else:
         #    #print("Depth Reached")
