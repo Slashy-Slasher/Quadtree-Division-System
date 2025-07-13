@@ -5,13 +5,14 @@ from time import sleep
 from QuadTree import QuadTree
 import pygame
 
-from Render import renderPlanets
+from Render import Render
 from pixel import pixel
 
 backColor = (255, 255, 255)
 resolution = (width, height) = (2000, 2000)   #This doesn't play with all systems well, but works as a test
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption('Barnes-Hut')
+Rend = Render("test")
 screen.fill(backColor)
 dotSize = 3
 SIZE = 2000
@@ -53,9 +54,12 @@ def findCenterOfMass(pixelArray):
 
 def redrawQuadTree(pixelArray, size):
     #tree = QuadTree(-resolution[0], -resolution[1], resolution[0], resolution[1], alignPoints(pixelArray), screen, 0)  #Change Points to Align Points
-    tree = QuadTree(-size, -size, size, size, alignPoints(pixelArray), screen,0)  # Change Points to Align Points
+    tree = QuadTree(-size, -size, size, size, alignPoints(pixelArray), screen,0, True)  # Change Points to Align Points
     tree.out_of_bounds(pixelArray)
-    renderPlanets(screen, pixelArray, 3, pygame.Vector2(0, 0))
+
+    Rend.renderPlanets(screen, pixelArray, 3, pygame.Vector2(0, 0))
+    Rend.draw_history(screen, pixelArray, pygame.Vector2(0, 0))
+
     tree.subDivide(0)
     array = QuadTree.helperDFS3(tree, tree)    #Should contain all the relevant data from the struct
     return array,tree.rootSize
@@ -101,38 +105,30 @@ def collision_tick(pixelArray, nested_pixel_array):
         for planet in sector:
             for planet2 in sector:
                 if planet != planet2:
+                    #print("Running Collision Tick")
                     closest_planet = min(sector, key=lambda planet: math.dist(planet.getPosition(), planet2.getPosition()))
-                    #print(math.dist(planet.getPosition(), closest_planet.getPosition()))
                     if(math.dist(planet.getPosition(), closest_planet.getPosition()) < (planet.radius + closest_planet.radius)):
-                        print("Collision Detected")
-                        #Write code here which will delete the planet with the smaller mass
                         if planet.mass < closest_planet.mass:
-                            if planet in pixelArray:
+                            if planet in pixelArray and nested_pixel_array:
                                 pixelArray.remove(planet)
+                                nested_pixel_array.remove(planet)
                         else:
                             if closest_planet in pixelArray:
                                 pixelArray.remove(closest_planet)
-                        #pygame.time.wait(1000)
     return pixelArray
 
 
-#def pixelFactory():
-#    #temp_pixel = pixel(30, resolution[0]/2 + random.randint(0, 1000), random.randint(0, 1440), (0,1), random.randint(0,4), False)
-#    temp_pixel = pixel(30, (resolution[0]/2+random.randint(-1000, 1000), resolution[1]/2 + random.randint(-720,720)), (0, 1), random.randint(-4,4), (random.randint(0, 255),random.randint(0, 255),random.randint(0, 255)),False)
-#    return temp_pixel
+def pixelFactory():
+    #temp_pixel = pixel(30, resolution[0]/2 + random.randint(0, 1000), random.randint(0, 1440), (0,1), random.randint(0,4), False)
+    temp_pixel = pixel(30, (resolution[0]/2+random.randint(-1000, 1000), resolution[1]/2 + random.randint(-720,720)), (0, 1), random.randint(-4,4), (random.randint(0, 255),random.randint(0, 255),random.randint(0, 255)),5, False)
+    return temp_pixel
 
 
 def universe_tick(pixelArray, array):   #Functions as the primary driver of the Barnes-Hut Simulation
     nested_pixel_array = pixelArrayGrouping(pixelArray, array) #Merges the information from the two lists together
-    print(len(pixelArray))
-
-    pygame.time.wait(1000)
-    COM = 0                                                    #Center of Mas+s
-    #gravitational_constant = 6.67430e-11
     gravitational_constant = (6.67430e-11)*10000000                       #Gravitational Constant [Set to 1 by default]
     gravitational_calculation_faster(gravitational_constant, nested_pixel_array)
-    pixelArray = collision_tick(pixelArray, nested_pixel_array)
-    return pixelArray
+    return pixelArray, nested_pixel_array
 
 
 pixelArray = [
@@ -141,33 +137,14 @@ pixelArray = [
         pixel(30, (resolution[0]/2+500,      resolution[1]/2), (0, 1), 2, (255,0,0),5, False),
     ]
 
-
-#pixelArray = [
-#    pixel(200*1000, (resolution[0]/2, resolution[1]/2), (0.2, -0.1), 0, (255,0,0), 10, True),
-#    pixel(30, (resolution[0]/2+250, resolution[1]/2), (0, 1), 5, (255,0,0),5, False),
-#    pixel(30, (resolution[0]/2+500,      resolution[1]/2), (0, 1), 2, (255,0,0),5, False),
-#    pixel(30, (resolution[0] / 2 + 750,  resolution[1]/2), (0, 1), 2, (255,0,0),5, False),
-#    pixel(30, (resolution[0] / 2 + 1000, resolution[1]/2), (0, 1), 2, (255,0,0),5, False),
-#    ]
-
-#for x in range(500):
-#    pixelArray.append(pixelFactory())
-#    pixelArray.append(pixelFactory())
-
-#pixelArray = [
-#    pixel(1.9891* 10**30, (resolution[0]/2, resolution[1]/2), (0, 0), 0, (255,255,0), 150, True),
-#    pixel(5.972 * 10**24, (resolution[0]/2+500000, resolution[1]/2), (0, 1), 10, (0,123,123),50, False),
-#    pixel(7.34767309 * 10**22, (resolution[0]/2+552, resolution[1]/2), (0, 1), 1, (255,255,255), 27/2,False),
-#    #pixel(30, (resolution[0] / 2 + 750, 738.2), (0, 1), 2, (255,0,0),False),
-#    #pixel(30, (resolution[0] / 2 + 1000, 738.2), (0, 1), 2, (255,0,0),False),
-#    ]
+for x in range(500):
+    pixelArray.append(pixelFactory())
 
 
 for x in pixelArray:    #Initializes the force vectors
     x.vector_set(x.direction, x.force)
 
-
-#pygame.display.flip()
+pygame.init()
 running = True
 while running:
     for event in pygame.event.get():
@@ -176,30 +153,33 @@ while running:
             running = False
 
     screen.fill((0, 0, 0))  # <<< Clear the screen here
-    #print(f'Number of Pixel present: {(len(pixelArray))}')
-    pygame.init()
-    start_ticks = pygame.time.get_ticks()
-    #print()
-    #print(pixelArray[0].color)
+    print(f'Number of Pixel present: {(len(pixelArray))}')
 
+
+
+
+    print("-----------------------------")
+    start_ticks = pygame.time.get_ticks()
     array, rootSize = redrawQuadTree(pixelArray, SIZE)  #Draws out the quadtree and creates the game window, returns leaf array
     SIZE = rootSize
     end_ticks = pygame.time.get_ticks()
-    #print(f"Quadtree time: {(end_ticks - start_ticks)} milliseconds")
+    quadtree_time = end_ticks - start_ticks
+    print(f"Quadtree time: {quadtree_time} milliseconds")
 
-    pygame.init()
+
     start_ticks = pygame.time.get_ticks()
-    universe_tick(pixelArray, array)             #Runs the model of the simulation based on the leaf array
+    nested_pixel_array = universe_tick(pixelArray, array)             #Runs the model of the simulation based on the leaf array
     end_ticks = pygame.time.get_ticks()
-    #print(f"Tick time: {(end_ticks - start_ticks)} milliseconds")
-    #print()
-    #print(pixelArray[0].color)
-    #pygame.time.delay(1000)
+    tick_time = end_ticks - start_ticks
+    print(f"Tick time: {tick_time} milliseconds")
 
-    #pygame.init()
-    #start_ticks = pygame.time.get_ticks()
-    #collision_tick()
-    #end_ticks = pygame.time.get_ticks()
-    #print(f"Collision time: {(end_ticks - start_ticks)} milliseconds")
+    print(nested_pixel_array)
+    start_ticks = pygame.time.get_ticks()
+    #collision_tick(pixelArray, nested_pixel_array)       #Checks for collisions
+    end_ticks = pygame.time.get_ticks()
+    collision_tick_time = end_ticks - start_ticks
+    print(f"Collision time: {collision_tick_time} milliseconds")
+    print(f'Operational Time Cost {quadtree_time+tick_time+collision_tick_time} milliseconds')
+    print("-----------------------------")
 
     pygame.display.flip()
