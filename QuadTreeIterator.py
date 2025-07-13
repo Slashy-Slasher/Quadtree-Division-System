@@ -6,7 +6,7 @@ import pygame
 width, height = 1920, 1080
 screen = pygame.display.set_mode((width, height))
 points = [(30, 30), (30, 40), (30, 50), (40, 50), (60, 50),(65, 50), (70, 50),(63, 30), (63, 30), (190, 180), (200, 180), (180, 180), (160, 180)]
-tree = QuadTree(0, 0, width, height, points, screen, 0)  #Change Points to Align Points
+tree = QuadTree(0, 0, width, height, points, screen, 0, True)  #Change Points to Align Points
 tree.subDivide(0)
 
 previous_node = None
