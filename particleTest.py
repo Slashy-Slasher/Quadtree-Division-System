@@ -4,13 +4,24 @@ from time import sleep
 
 from QuadTree import QuadTree
 import pygame
+from pygame._sdl2 import Window
 
 from Render import Render
 from pixel import pixel
 
+pygame.init()
+
+infoObject = pygame.display.Info()
+
 backColor = (255, 255, 255)
-resolution = (width, height) = (2000, 2000)   #This doesn't play with all systems well, but works as a test
-screen = pygame.display.set_mode((width, height))
+
+# This should create a maximized window that works on any screen resolution
+# https://www.reddit.com/r/pygame/comments/12eklyg/comment/kjmarq7/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+
+resolution = (width, height) = (infoObject.current_w, infoObject.current_h)   #This doesn't play with all systems well, but works as a test
+screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
+Window.from_display_module().maximize()
+
 pygame.display.set_caption('Barnes-Hut')
 Rend = Render("test")
 screen.fill(backColor)
@@ -144,7 +155,12 @@ for x in range(500):
 for x in pixelArray:    #Initializes the force vectors
     x.vector_set(x.direction, x.force)
 
-pygame.init()
+# ^^ Stuff Above needs to be organized ^^
+
+# vv Stuff Below needs to be organized vv
+
+
+
 running = True
 while running:
     for event in pygame.event.get():
