@@ -36,7 +36,7 @@ dotSize = 5
 #points = generatePointPositions([], dotNumber, resolution)
 points = [(30, 30), (30, 40), (30, 50), (40, 50), (60, 50),(65, 50), (70, 50),(63, 30), (63, 30), (190, 180), (200, 180), (180, 180), (160, 180)]
 
-testTree = QuadTree(0, 0, resolution[0], resolution[1], points, screen, 0)
+testTree = QuadTree(0, 0, resolution[0], resolution[1], points, screen, 0, True)
 
 
 
