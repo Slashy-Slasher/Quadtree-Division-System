@@ -26,6 +26,12 @@ class pixel:
     def getMass(self):
         return self.mass
 
+    def getPositionHistory(self):
+        return self.position_history
+
+    def getVelocityHistory(self):
+        return self.velocity_history
+
     def vector_set(self, direction, force):
             self.direction = direction
             self.force = force
@@ -37,6 +43,8 @@ class pixel:
             self.position += self.gForce
             self.position_history.append(self.position)
             self.velocity_history.append(self.gForce)
+            if len(self.position_history) > 100:
+                del self.position_history[0]
 
         #self.gForce = pygame.Vector2(0,0)
 
