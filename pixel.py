@@ -14,6 +14,8 @@ class pixel:
         self.radius = diameter/2
         self.gForce = pygame.Vector2(0,0)
         self.lockedState = isLocked
+        self.position_history = []
+        self.velocity_history = []
 
     def getPosition(self):
         return tuple(self.position)
@@ -33,6 +35,9 @@ class pixel:
         #self.position = self.force * pygame.Vector2(self.direction)
         if not self.getlockedState():
             self.position += self.gForce
+            self.position_history.append(self.position)
+            self.velocity_history.append(self.gForce)
+
         #self.gForce = pygame.Vector2(0,0)
 
     def getDirection(self, p0, p1):
