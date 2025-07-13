@@ -96,7 +96,7 @@ def gravitational_calculation_faster(g, nested_pixel_array):
     #print("Ticked Gravity")
     return "Done"
 
-def collision_tick(nested_pixel_array):
+def collision_tick(pixelArray, nested_pixel_array):
     for sector in nested_pixel_array:
         for planet in sector:
             for planet2 in sector:
@@ -107,13 +107,13 @@ def collision_tick(nested_pixel_array):
                         print("Collision Detected")
                         #Write code here which will delete the planet with the smaller mass
                         if planet.mass < closest_planet.mass:
-                            if planet in sector:
-                                sector.remove(planet)
+                            if planet in pixelArray:
+                                pixelArray.remove(planet)
                         else:
-                            if closest_planet in sector:
-                                sector.remove(closest_planet)
+                            if closest_planet in pixelArray:
+                                pixelArray.remove(closest_planet)
                         #pygame.time.wait(1000)
-    return nested_pixel_array
+    return pixelArray
 
 
 #def pixelFactory():
@@ -124,21 +124,15 @@ def collision_tick(nested_pixel_array):
 
 def universe_tick(pixelArray, array):   #Functions as the primary driver of the Barnes-Hut Simulation
     nested_pixel_array = pixelArrayGrouping(pixelArray, array) #Merges the information from the two lists together
-    #print(len(nested_pixel_array))
-    ##print("-------------------------------------------------")
-    ##for x in nested_pixel_array:
-    ##    print(f'Pixel Array {x}')
-    ##    print("\n")
-    ##print("\n")
-##
-#    #print("-------------------------------------------------")
-    #pygame.time.wait(10000)
+    print(len(pixelArray))
+
+    pygame.time.wait(1000)
     COM = 0                                                    #Center of Mas+s
     #gravitational_constant = 6.67430e-11
     gravitational_constant = (6.67430e-11)*10000000                       #Gravitational Constant [Set to 1 by default]
     gravitational_calculation_faster(gravitational_constant, nested_pixel_array)
-    collision_tick(nested_pixel_array)
-    return True
+    pixelArray = collision_tick(pixelArray, nested_pixel_array)
+    return pixelArray
 
 
 pixelArray = [
