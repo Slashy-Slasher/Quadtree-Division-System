@@ -120,8 +120,8 @@ def pixelFactory():
     temp_pixel = pixel(30, (resolution[0]/2+random.randint(-2000, 2000), resolution[1]/2 + random.randint(-2000,2000)), (0, 1), random.randint(-5,5), (random.randint(0, 255),random.randint(0, 255),random.randint(0, 255)),5, False)
     return temp_pixel
 
-def pixelFactory2():
-    return pixelArray[0].form_satellite(gravitational_constant, randint(int(pixelArray[0].radius)+50, 1000))
+def pixelFactory2(index):
+    return pixelArray[index].form_satellite(gravitational_constant, randint(int(pixelArray[index].radius)+50, 1000))
 
 
 def universe_tick(pixelArray, array):   #Functions as the primary driver of the Barnes-Hut Simulation
@@ -143,9 +143,10 @@ pixelArray = [
 #for x in range(1000):
 #    pixelArray.append(pixelFactory())
 
-for x in range(2000):   #Number of planets to be "Spawned"
-    pixelArray.append(pixelFactory2())
-
+#for x in range(2000):   #Number of planets to be "Spawned"
+#    pixelArray.append(pixelFactory2())
+pixelArray.append(pixelFactory2(0))
+pixelArray.append(pixelFactory2(1))
 
 
 for x in pixelArray:    #Initializes the force vectors
@@ -167,7 +168,7 @@ while running:
 
     print("-----------------------------")
     start_ticks = pygame.time.get_ticks()
-    array, rootSize = redrawQuadTree(pixelArray, SIZE)  #Draws out the quadtree and creates the game window, returns leaf array
+    array, rootSize = redrawQuadTree(pixelArray, SIZE)  #Draws out the quadtree and creates the game window, returns the leaf array
     SIZE = rootSize
     end_ticks = pygame.time.get_ticks()
     quadtree_time = end_ticks - start_ticks
@@ -192,6 +193,8 @@ while running:
     print("-----------------------------")
     total_operations += 1
     pygame.display.flip()
+
+
 print(f'Total QuadTree time: {total_quadTree_time} milliseconds')
 print(f'Total Tick time: {total_tick_time} milliseconds')
 print(f'Total Collision time: {total_collision_time} milliseconds')
