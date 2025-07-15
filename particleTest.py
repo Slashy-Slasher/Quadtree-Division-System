@@ -1,6 +1,6 @@
-import math
 import random
-from time import sleep
+import math
+from itertools import combinations
 
 from QuadTree import QuadTree
 import pygame
@@ -101,20 +101,22 @@ def gravitational_calculation_faster(g, nested_pixel_array):
     return "Done"
 
 def collision_tick(pixelArray, nested_pixel_array):
+    to_remove = set()
     for sector in nested_pixel_array:
-        for planet in sector:
-            for planet2 in sector:
-                if planet != planet2:
-                    #print("Running Collision Tick")
-                    closest_planet = min(sector, key=lambda planet: math.dist(planet.getPosition(), planet2.getPosition()))
-                    if(math.dist(planet.getPosition(), closest_planet.getPosition()) < (planet.radius + closest_planet.radius)):
-                        if planet.mass < closest_planet.mass:
-                            if planet in pixelArray and nested_pixel_array:
-                                pixelArray.remove(planet)
-                                nested_pixel_array.remove(planet)
-                        else:
-                            if closest_planet in pixelArray:
-                                pixelArray.remove(closest_planet)
+        for planet1, planet2 in combinations(sector, 2):
+            if math.dist(planet1.getPosition(), planet2.getPosition()) < (planet1.radius + planet2.radius):
+                if planet1.mass < planet2.mass:
+                    to_remove.add(planet1)
+                else:
+                    to_remove.add(planet2)
+    #Changed to more cleanly remove planets, will change to change vector + velocity after other issues are solved
+    for planet in to_remove:
+        if planet in pixelArray:
+            pixelArray.remove(planet)
+        for sector in nested_pixel_array:
+            if planet in sector:
+                sector.remove(planet)
+
     return pixelArray
 
 
@@ -128,7 +130,7 @@ def universe_tick(pixelArray, array):   #Functions as the primary driver of the 
     nested_pixel_array = pixelArrayGrouping(pixelArray, array) #Merges the information from the two lists together
     gravitational_constant = (6.67430e-11)*10000000                       #Gravitational Constant [Set to 1 by default]
     gravitational_calculation_faster(gravitational_constant, nested_pixel_array)
-    return pixelArray, nested_pixel_array
+    return nested_pixel_array
 
 
 pixelArray = [
