@@ -10,6 +10,7 @@ from pixel import pixel
 
 backColor = (255, 255, 255)
 resolution = (width, height) = (2000, 2000)   #This doesn't play with all systems well, but works as a test
+pygame.init()
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption('Barnes-Hut')
 Rend = Render("test")
@@ -53,38 +54,32 @@ def findCenterOfMass(pixelArray):
     return com
 
 def redrawQuadTree(pixelArray, size):
-    #tree = QuadTree(-resolution[0], -resolution[1], resolution[0], resolution[1], alignPoints(pixelArray), screen, 0)  #Change Points to Align Points
     tree = QuadTree(-size, -size, size, size, alignPoints(pixelArray), screen,0, True)  # Change Points to Align Points
     tree.out_of_bounds(pixelArray)
 
+    #Rendering pipeline
     Rend.renderPlanets(screen, pixelArray, 3, pygame.Vector2(0, 0))
     Rend.draw_history(screen, pixelArray, pygame.Vector2(0, 0))
-
+    #Calling the tree to recursively divide
     tree.subDivide(0)
     array = QuadTree.helperDFS3(tree, tree)    #Should contain all the relevant data from the struct
-    return array,tree.rootSize
+    return array, tree.rootSize
 
 
 #Testing more "efficient" method however results are varied
 def gravitational_calculation_faster(g, nested_pixel_array):
-    # Step 1: Compute intra-cluster (nearby planets) brute force gravity
-    #print(nested_pixel_array)
-    #print()
     for cluster in nested_pixel_array:
         for i, planet1 in enumerate(cluster):
             for planet2 in cluster[i+1:]:
                 planet1.gravity(g, planet1, planet2)
                 planet2.gravity(g, planet2, planet1)
 
-    # Step 2: Compute inter-cluster gravity using center of mass approximations
-    # Precompute COM for each cluster to avoid recomputation
     cluster_coms = []
     for cluster in nested_pixel_array:
         com_mass = pixel.return_list_mass(cluster)
         com_pos = findCenterOfMass(cluster)
         cluster_coms.append(pixel(com_mass, com_pos, (0,0), 0, (0,0,0), 0,False))
 
-    # Apply gravity between clusters
     for i, cluster_x in enumerate(nested_pixel_array):
         for j, cluster_z in enumerate(nested_pixel_array):
             if i != j:
@@ -92,13 +87,11 @@ def gravitational_calculation_faster(g, nested_pixel_array):
                 for planet in cluster_x:
                     planet.gravity(g, planet, com_z)
 
-    # Step 3: Apply forces to all planets after all gravity calculations
     for cluster in nested_pixel_array:
         for planet in cluster:
             planet.applyForce()
-    #print(f"PixelArray: {(nested_pixel_array)}")
-    #print("Ticked Gravity")
     return "Done"
+
 
 def collision_tick(pixelArray, nested_pixel_array):
     to_remove = set()
@@ -121,8 +114,7 @@ def collision_tick(pixelArray, nested_pixel_array):
 
 
 def pixelFactory():
-    #temp_pixel = pixel(30, resolution[0]/2 + random.randint(0, 1000), random.randint(0, 1440), (0,1), random.randint(0,4), False)
-    temp_pixel = pixel(30, (resolution[0]/2+random.randint(-1000, 1000), resolution[1]/2 + random.randint(-720,720)), (0, 1), random.randint(-4,4), (random.randint(0, 255),random.randint(0, 255),random.randint(0, 255)),5, False)
+    temp_pixel = pixel(30, (resolution[0]/2+random.randint(-2000, 2000), resolution[1]/2 + random.randint(-2000,2000)), (0, 1), random.randint(-4,4), (random.randint(0, 255),random.randint(0, 255),random.randint(0, 255)),5, False)
     return temp_pixel
 
 
@@ -134,9 +126,9 @@ def universe_tick(pixelArray, array):   #Functions as the primary driver of the 
 
 
 pixelArray = [
-        pixel(200*1000, (resolution[0]/2, resolution[1]/2-2), (0,0), 0, (255,0,0), 10, True),
+        pixel(200*1000, (resolution[0]/2, resolution[1]/2-2), (0,0), 0, (255,255,0), 100, True),
         pixel(30, (resolution[0]/2+100, resolution[1]/2), (0, 1), 0, (255,0,0),5, False),
-        pixel(30, (resolution[0]/2+500,      resolution[1]/2), (0, 1), 2, (255,0,0),5, False),
+        pixel(30, (resolution[0]/2+500, resolution[1]/2), (0, 1), 2, (255,0,0),5, False),
     ]
 
 for x in range(500):
@@ -146,7 +138,10 @@ for x in range(500):
 for x in pixelArray:    #Initializes the force vectors
     x.vector_set(x.direction, x.force)
 
-pygame.init()
+total_quadTree_time = 0
+total_collision_time = 0
+total_tick_time = 0
+total_operations = 0
 running = True
 while running:
     for event in pygame.event.get():
@@ -157,15 +152,13 @@ while running:
     screen.fill((0, 0, 0))  # <<< Clear the screen here
     print(f'Number of Pixel present: {(len(pixelArray))}')
 
-
-
-
     print("-----------------------------")
     start_ticks = pygame.time.get_ticks()
     array, rootSize = redrawQuadTree(pixelArray, SIZE)  #Draws out the quadtree and creates the game window, returns leaf array
     SIZE = rootSize
     end_ticks = pygame.time.get_ticks()
     quadtree_time = end_ticks - start_ticks
+    total_quadTree_time += quadtree_time
     print(f"Quadtree time: {quadtree_time} milliseconds")
 
 
@@ -173,15 +166,25 @@ while running:
     nested_pixel_array = universe_tick(pixelArray, array)             #Runs the model of the simulation based on the leaf array
     end_ticks = pygame.time.get_ticks()
     tick_time = end_ticks - start_ticks
+    total_tick_time += tick_time
     print(f"Tick time: {tick_time} milliseconds")
 
-    print(nested_pixel_array)
     start_ticks = pygame.time.get_ticks()
-    #collision_tick(pixelArray, nested_pixel_array)       #Checks for collisions
+    collision_tick(pixelArray, nested_pixel_array)       #Checks for collisions
     end_ticks = pygame.time.get_ticks()
     collision_tick_time = end_ticks - start_ticks
+    total_collision_time += collision_tick_time
     print(f"Collision time: {collision_tick_time} milliseconds")
     print(f'Operational Time Cost {quadtree_time+tick_time+collision_tick_time} milliseconds')
     print("-----------------------------")
-
+    total_operations += 1
     pygame.display.flip()
+print(f'Total QuadTree time: {total_quadTree_time} milliseconds')
+print(f'Total Tick time: {total_tick_time} milliseconds')
+print(f'Total Collision time: {total_collision_time} milliseconds')
+total_time = total_quadTree_time+total_tick_time+total_collision_time
+print(f'Total Operational time: {total_time} milliseconds')
+print(f'Total Operations time: {total_operations} ticks')
+print("----------------------------------------------------")
+print(f'Average TPS(Ticks per second): {total_tick_time/total_operations} milliseconds')
+print(f'Average FPS(Frames per second): {1000/(total_tick_time/total_operations)} FPS')
