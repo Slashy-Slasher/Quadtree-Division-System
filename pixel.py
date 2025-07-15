@@ -3,7 +3,6 @@ import random
 
 import pygame
 
-
 class pixel:
     def __init__(self, mass, position, direction, force, color, diameter, isLocked):
         self.mass = mass  # Mass
@@ -25,6 +24,9 @@ class pixel:
 
     def getMass(self):
         return self.mass
+
+    def getVelocity(self):
+        return self.gForce
 
     def getPositionHistory(self):
         return self.position_history
@@ -71,4 +73,13 @@ class pixel:
             self.force = (g * obj0.mass * obj1.mass) / (math.dist(obj0.position, obj1.position) ** 2) #Force
         self.gForce += (self.direction * self.force)  #Vector Created
 
+    def form_satellite(self, grav_constant, h):   #forms a satellite around "self", r is desired distance
+        needed_velocity = math.sqrt((grav_constant * self.getMass())/(self.radius+h+15))
+        vec0 = pygame.Vector2(self.getPosition())
+        #vec1 = pygame.Vector2(self.getPosition())+pygame.Vector2(random.randint(-r, r), random.randint(-r, r))
+        vec1 = pygame.Vector2(self.getPosition()[0]+(self.radius+h+30), self.getPosition()[1])
+        direction_to_com = pygame.Vector2(vec0 - vec1).normalize()
+        new_position = direction_to_com*(self.radius+h+30)
+        new_direction = pygame.Vector2(-direction_to_com[1], direction_to_com[0])
 
+        return pixel(30, vec1, new_direction, needed_velocity*5, (0,0,255), 15, False)
