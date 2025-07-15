@@ -10,7 +10,7 @@ from Render import Render
 from pixel import pixel
 
 backColor = (255, 255, 255)
-resolution = (width, height) = (2000, 2000)   #This doesn't play with all systems well, but works as a test
+resolution = (width, height) = (1000, 1000)   #This doesn't play with all systems well, but works as a test
 pygame.init()
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption('Barnes-Hut')
@@ -20,6 +20,7 @@ dotSize = 3
 SIZE = 2000
 gravitational_constant = .01  # Gravitational Constant [Set to .01 by default]
 render_quadtree = False
+clock = pygame.time.Clock()
 
 def alignPoints(pixelArray):
     points = []
@@ -48,12 +49,14 @@ def findCenterOfMass(pixelArray):
     numeratorX = 0
     numeratorY = 0
     denominator = 0
+    com = 0
     for x in pixelArray:
         numeratorX += x.getPosition()[0]*x.getMass()
         numeratorY += x.getPosition()[1]*x.getMass()
     for x in pixelArray:
         denominator += x.getMass()
-    com = (numeratorX/denominator, numeratorY/denominator)
+    if(denominator != 0):
+        com = (numeratorX/denominator, numeratorY/denominator)
     return com
 
 def redrawQuadTree(pixelArray, size):
@@ -61,8 +64,8 @@ def redrawQuadTree(pixelArray, size):
     tree.out_of_bounds(pixelArray)
 
     #Rendering pipeline
-    Rend.renderPlanets(screen, pixelArray, 3, pygame.Vector2(0, 0))
-    Rend.draw_history(screen, pixelArray, pygame.Vector2(0, 0))
+    Rend.renderPlanets(screen, pixelArray, pygame.Vector2(0, 0), .2)
+    #Rend.draw_history(screen, pixelArray, pygame.Vector2(0, 0))
     #Calling the tree to recursively divide
     tree.subDivide(0)
     array = QuadTree.helperDFS3(tree, tree)    #Should contain all the relevant data from the struct
@@ -120,8 +123,8 @@ def pixelFactory():
     temp_pixel = pixel(30, (resolution[0]/2+random.randint(-2000, 2000), resolution[1]/2 + random.randint(-2000,2000)), (0, 1), random.randint(-5,5), (random.randint(0, 255),random.randint(0, 255),random.randint(0, 255)),5, False)
     return temp_pixel
 
-def pixelFactory2(index):
-    return pixelArray[index].form_satellite(gravitational_constant, randint(int(pixelArray[index].radius)+50, 1000))
+def pixelFactory2(index, direction):
+    return pixelArray[index].form_satellite(gravitational_constant, randint(int(pixelArray[index].radius)+50, 1000), direction)
 
 
 def universe_tick(pixelArray, array):   #Functions as the primary driver of the Barnes-Hut Simulation
@@ -129,9 +132,13 @@ def universe_tick(pixelArray, array):   #Functions as the primary driver of the 
     gravitational_calculation_faster(gravitational_constant, nested_pixel_array)
     return nested_pixel_array
 
-
+sun_mass = 1000000
 pixelArray = [
-        pixel(200*10000, (resolution[0]/2, resolution[1]/2-2), (0,0), 0, (255,255,0), 100, True),
+        #pixel(200*10000, (resolution[0]/2, resolution[1]/2-2), (1,0), 0, (255,255,0), 100, True),
+    pixel(sun_mass, (resolution[0] / 2+1700, resolution[1] / 2 - 2+1700), (1, 0), 0, (255, 255, 0), 100, True),
+    pixel(sun_mass, (resolution[0] / 2+3500, resolution[1] / 2 - 2+3500), (-1, 0), 0, (255, 255, 0), 100, True),
+
+    #pixel(0, (resolution[0]/2+500, resolution[1]/2-2), (0,0), 0, (255,255,0), 100, True)
         #pixel(30, (resolution[0]/2+100, resolution[1]/2), (0, 1), 0, (255,0,0),5, False),
         #pixel(30, (resolution[0]/2+500, resolution[1]/2), (0, 1), 2, (255,0,0),5, False),
     ]
@@ -144,9 +151,13 @@ pixelArray = [
 #    pixelArray.append(pixelFactory())
 
 #for x in range(2000):   #Number of planets to be "Spawned"
-#    pixelArray.append(pixelFactory2())
-pixelArray.append(pixelFactory2(0))
-pixelArray.append(pixelFactory2(1))
+#    pixelArray.append(pixelFactory2(0))
+
+for x in range(750):   #Number of planets to be "Spawned"
+    pixelArray.append(pixelFactory2(0, 1))
+
+for x in range(750):   #Number of planets to be "Spawned"
+    pixelArray.append(pixelFactory2(1, -1))
 
 
 for x in pixelArray:    #Initializes the force vectors
@@ -162,7 +173,7 @@ while running:
         keys = pygame.key.get_pressed()
         if event.type == pygame.QUIT or (keys[pygame.K_LCTRL] and keys[pygame.K_c]): #Pressing Ctrl + C kills task
             running = False
-
+    clock.tick(60)
     screen.fill((0, 0, 0))  # <<< Clear the screen here
     print(f'Number of Pixel present: {(len(pixelArray))}')
 
@@ -191,7 +202,14 @@ while running:
     print(f"Collision time: {collision_tick_time} milliseconds")
     print(f'Operational Time Cost {quadtree_time+tick_time+collision_tick_time} milliseconds')
     print("-----------------------------")
+
+    print(pixelArray[0].getPosition())
+    print(pixelArray[1].getPosition())
+
     total_operations += 1
+
+    #Rend.scale_world(screen, .5)
+
     pygame.display.flip()
 
 
