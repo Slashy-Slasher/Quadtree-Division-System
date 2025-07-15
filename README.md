@@ -18,3 +18,8 @@ This is no longer the case, all changes have been merged into the main Branch
 <h2 align="center" style="font-size: 50px;"> The Barnes-Hut Simulation </h2>
 <p3> The Barnes Hut simulation, is a classical approach originally developed in 1986 to the N-body problem utilizing a quadtree to circumvent the O(N^2) cost of a traditional "Bruteforce" N-body simulation. The Barnes-Hut method changes the upperbound in operation time to O(n log n) allowing for many more planets to be represented within the program, with a minor effect on overall accuracy</p3>
 <br>https://en.wikipedia.org/wiki/Barnes%E2%80%93Hut_simulation</br>
+
+<p align="center">
+  <img src="Binary_Stars.gif" alt="Quadtree Demo" />
+</p>
+
