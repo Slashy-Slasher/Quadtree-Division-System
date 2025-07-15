@@ -9,7 +9,7 @@ class QuadTree:
         self.w = w
         self.h = h
         self.points = self.pointsIn(x, y, w, h, points)
-        self.max = 3  # Defines points which can exist before square subdivision
+        self.max = 20  # Defines points which can exist before square subdivision
         self.screen = screen
         self.depth = depth
         self.rootSize = abs(x)

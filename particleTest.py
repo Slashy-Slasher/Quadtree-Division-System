@@ -1,6 +1,7 @@
 import random
 import math
 from itertools import combinations
+from random import randint
 
 from QuadTree import QuadTree
 import pygame
@@ -17,6 +18,8 @@ Rend = Render("test")
 screen.fill(backColor)
 dotSize = 3
 SIZE = 2000
+gravitational_constant = .01  # Gravitational Constant [Set to .01 by default]
+render_quadtree = False
 
 def alignPoints(pixelArray):
     points = []
@@ -54,7 +57,7 @@ def findCenterOfMass(pixelArray):
     return com
 
 def redrawQuadTree(pixelArray, size):
-    tree = QuadTree(-size, -size, size, size, alignPoints(pixelArray), screen,0, True)  # Change Points to Align Points
+    tree = QuadTree(-size, -size, size, size, alignPoints(pixelArray), screen,0, render_quadtree)  # Change Points to Align Points
     tree.out_of_bounds(pixelArray)
 
     #Rendering pipeline
@@ -114,25 +117,35 @@ def collision_tick(pixelArray, nested_pixel_array):
 
 
 def pixelFactory():
-    temp_pixel = pixel(30, (resolution[0]/2+random.randint(-2000, 2000), resolution[1]/2 + random.randint(-2000,2000)), (0, 1), random.randint(-4,4), (random.randint(0, 255),random.randint(0, 255),random.randint(0, 255)),5, False)
+    temp_pixel = pixel(30, (resolution[0]/2+random.randint(-2000, 2000), resolution[1]/2 + random.randint(-2000,2000)), (0, 1), random.randint(-5,5), (random.randint(0, 255),random.randint(0, 255),random.randint(0, 255)),5, False)
     return temp_pixel
+
+def pixelFactory2():
+    return pixelArray[0].form_satellite(gravitational_constant, randint(int(pixelArray[0].radius)+50, 1000))
 
 
 def universe_tick(pixelArray, array):   #Functions as the primary driver of the Barnes-Hut Simulation
     nested_pixel_array = pixelArrayGrouping(pixelArray, array) #Merges the information from the two lists together
-    gravitational_constant = (6.67430e-11)*10000000                       #Gravitational Constant [Set to 1 by default]
     gravitational_calculation_faster(gravitational_constant, nested_pixel_array)
     return nested_pixel_array
 
 
 pixelArray = [
-        pixel(200*1000, (resolution[0]/2, resolution[1]/2-2), (0,0), 0, (255,255,0), 100, True),
-        pixel(30, (resolution[0]/2+100, resolution[1]/2), (0, 1), 0, (255,0,0),5, False),
-        pixel(30, (resolution[0]/2+500, resolution[1]/2), (0, 1), 2, (255,0,0),5, False),
+        pixel(200*10000, (resolution[0]/2, resolution[1]/2-2), (0,0), 0, (255,255,0), 100, True),
+        #pixel(30, (resolution[0]/2+100, resolution[1]/2), (0, 1), 0, (255,0,0),5, False),
+        #pixel(30, (resolution[0]/2+500, resolution[1]/2), (0, 1), 2, (255,0,0),5, False),
     ]
 
-for x in range(500):
-    pixelArray.append(pixelFactory())
+#pixelArray.append(pixelArray[0].form_satellite(gravitational_constant, 300))
+#pixelArray.append(pixelArray[0].form_satellite(gravitational_constant, randint(pixelArray[0].radius+50, 1000)))
+#pixelArray.append(pixelArray[0].form_satellite(gravitational_constant, 300))
+
+#for x in range(1000):
+#    pixelArray.append(pixelFactory())
+
+for x in range(2000):   #Number of planets to be "Spawned"
+    pixelArray.append(pixelFactory2())
+
 
 
 for x in pixelArray:    #Initializes the force vectors
@@ -170,7 +183,7 @@ while running:
     print(f"Tick time: {tick_time} milliseconds")
 
     start_ticks = pygame.time.get_ticks()
-    collision_tick(pixelArray, nested_pixel_array)       #Checks for collisions
+    #collision_tick(pixelArray, nested_pixel_array)     #Currently disabled for visuals
     end_ticks = pygame.time.get_ticks()
     collision_tick_time = end_ticks - start_ticks
     total_collision_time += collision_tick_time
