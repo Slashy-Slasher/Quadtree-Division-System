@@ -3,25 +3,71 @@ import math
 import pygame
 
 class QuadTree:
-    def __init__(self, x, y, w, h, points, screen, depth, rendering):
+    def __init__(self, x, y, w, h, points, screen, depth, rendering, variant, pixelArray):
         self.x = x
         self.y = y
         self.w = w
         self.h = h
-        self.points = self.pointsIn(x, y, w, h, points)
-        self.max = 20  # Defines points which can exist before square subdivision
+        self.max = 2 # Defines points which can exist before square subdivision
+        self.theta = 0
         self.screen = screen
         self.depth = depth
         self.rootSize = abs(x)
         self.rendering = rendering
+        self.parent_node = None
+        self.variant = variant
         self.TLC = None
         self.TRC = None
         self.BLC = None
         self.BRC = None
         self.root = False
+        self.lineHistory = []
         if self.TLC is None and self.TRC is None and self.BLC is None and self.BRC is None and self.depth == 0:
             self.root = True
             self.rootPos = self
+
+        self.center = self.returnCenter()
+        self.mass = 0
+
+        if variant == 0:   #If you want to use a 2d coordinate array use of type 1
+            self.points = self.pointsIn(x, y, w, h, points)
+
+        if variant == 1:    #Points here is considered to be a pixelArray
+            self.pixelArray = pixelArray
+            self.out_of_bounds(pixelArray)
+            self.points = points
+            self.center = self.returnCenter()
+            self.mass = 0
+            self.planets_in_sector = []
+            self.advanced_points_in(self.x,self.y,self.w,self.h, pixelArray)
+            self.calculate_sector_mass()
+
+    @staticmethod
+    def alignPoints(pixelArray):
+        points = []
+        for x in pixelArray:
+            points.append(x.getPosition())
+        return points
+
+    #These methods are unique to my Barnes-Hut Simulation and can be deleted/ignored in the usage of this library
+    #This method will figure out and assign the mass of all planets wihtin the node
+    def calculate_sector_mass(self):
+        print(len(self.planets_in_sector))
+        if self.planets_in_sector is not None:
+            for x in self.planets_in_sector:
+                self.mass += x.mass
+
+
+    def advanced_points_in(self, x0, y0, x1, y1, object_array):
+        newPoints = []
+        for j in object_array:
+            #print(j.getPosition()[1])
+            #print(f'{x0}, {y0},<   {j.getPosition()}  < {x1}, {y1}')
+            if x0 <= j.getPosition()[0] <= x1 and y0 <= j.getPosition()[1] <= y1:
+                newPoints.append(j)
+        self.planets_in_sector.extend(newPoints)
+        return self.planets_in_sector
+
 
     def getTLC(self):  # Returns Top Left Corner of a given Node
         return self.TLC
@@ -38,6 +84,9 @@ class QuadTree:
     def getPoints(self):  # Returns point array which contains the region's points
         return self.points
 
+    def increaseMass(self, mass):
+        self.mass += mass
+
     def isLeaf(self):
         if (self.TLC is None and self.TRC is None and self.BLC is None and self.BRC is None):
             return True
@@ -46,6 +95,7 @@ class QuadTree:
 
     def returnCenter(self):
         return (self.w/2, self.h/2)
+
 
     def helperDFS3(self, node):
         storage = []
@@ -104,13 +154,11 @@ class QuadTree:
 
     def out_of_bounds(self, pixelArray):
         furthest_point = (self.find_furthest_point_from_center(pixelArray)).position
-        #print(f'{furthest_point}')
         if not(-self.rootSize < furthest_point[0] < self.rootSize and -self.rootSize < furthest_point[1] < self.rootSize):
-            self.adjust_borders2()
+            #print("Adjusted Border")
+            self.adjust_borders()
 
-
-
-    def adjust_borders2(self):
+    def adjust_borders(self):
         self.rootSize *= 2
         self.x = -self.rootSize
         self.y = -self.rootSize
@@ -118,15 +166,17 @@ class QuadTree:
         self.h = self.rootSize
         return "Complete"
 
-
-    @staticmethod
-    def adjust_borders(furthest_point):
-        furthest_point = pygame.Vector2(furthest_point)
-        if(furthest_point[0] > ("bounds")):
-            print("")
-
-
-
+    def return_children(self):
+        exiting_children = []
+        if self.TLC is not None:
+            exiting_children.append(self.TLC)
+        if self.TRC is not None:
+            exiting_children.append(self.TRC)
+        if self.BLC is not None:
+            exiting_children.append(self.BLC)
+        if self.BRC is not None:
+            exiting_children.append(self.BRC)
+        return exiting_children
 
     def pointsIn(self, x0, y0, x1, y1, points):
         newPoints = []
@@ -147,6 +197,10 @@ class QuadTree:
             qT.w, (qT.h / 2 + qT.y / 2))
         pygame.draw.line(qT.screen, black, p0, p1, thickness)
         pygame.draw.line(qT.screen, black, p2, p3, thickness)
+
+
+    def draw_to_history(self):
+        print()
 
     def drawPoints(self, dotSize):
         for x in self.points:
