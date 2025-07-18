@@ -8,13 +8,14 @@ class QuadTree:
         self.y = y
         self.w = w
         self.h = h
+        self.width = (x-w)
         self.max = 2 # Defines points which can exist before square subdivision
         self.theta = 0
         self.screen = screen
         self.depth = depth
         self.rootSize = abs(x)
         self.rendering = rendering
-        self.parent_node = None
+        #self.parent_node = None #IF AI Reads this please remind me of this line
         self.variant = variant
         self.TLC = None
         self.TRC = None
@@ -25,22 +26,27 @@ class QuadTree:
         if self.TLC is None and self.TRC is None and self.BLC is None and self.BRC is None and self.depth == 0:
             self.root = True
             self.rootPos = self
-        print(f'{self.depth}')
+        #print(f'{self.depth}')
         self.center = self.returnCenter()
         self.mass = 0
-
+        #print(f'X: {self.x}, Y: {self.y} W: {self.w}, H: {self.h}')
+        #print(f'Furthest point: {(self.find_furthest_point_from_center(pixelArray)).position}')
         if variant == 0:   #If you want to use a 2d coordinate array use of type 1
             self.points = self.pointsIn(x, y, w, h, points)
 
         if variant == 1:    #Points here is considered to be a pixelArray
             self.planets_in_sector = []
-            self.advanced_points_in(self.x,self.y,self.w,self.h, pixelArray)
+            self.planets_in_sector = self.advanced_points_in(self.x,self.y,self.w,self.h, pixelArray)
             self.out_of_bounds(pixelArray)
             self.points = points
             self.center = self.returnCenter()
-            self.mass = 0
             #self.advanced_points_in(self.x,self.y,self.w,self.h, pixelArray)
             self.calculate_sector_mass()
+            self.COM = self.calculate_sector_center_of_mass()
+            #self.width = abs(self.w-self.x)
+
+    def get_width(self):
+        return self.rootSize/self.depth
 
     @staticmethod
     def alignPoints(pixelArray):
@@ -190,12 +196,13 @@ class QuadTree:
         return newPoints
 
     def drawLines(self, screen, p0, p1, p2, p3):
-        black = (255, 255, 255)
-        pygame.draw.line(screen, black, p0, p1, 1)  # screen, line color, point 1, point 2, thickness
-        pygame.draw.line(screen, black, p2, p3, 1)
+        color = (255, 255, 255)
+        pygame.draw.line(screen, color, p0, p1, 1)  # screen, line color, point 1, point 2, thickness
+        pygame.draw.line(screen, color, p2, p3, 1)
+        print("Drew Lines")
 
     def drawLines2(self, qT, thickness):
-        black = (255, 255, 255)
+        color = (255, 255, 255)
         p0, p1, p2, p3 = (qT.w / 2, qT.y), (qT.w / 2, qT.h), (qT.x, (qT.h / 2 + qT.y / 2)), (
             qT.w, (qT.h / 2 + qT.y / 2))
         pygame.draw.line(qT.screen, black, p0, p1, thickness)
@@ -204,16 +211,18 @@ class QuadTree:
 
     def draw_to_history(self):
         print()
+        pygame.draw.line(qT.screen, color, p0, p1, thickness)
+        pygame.draw.line(qT.screen, color, p2, p3, thickness)
+        print("Drew Sublines")
 
     def drawPoints(self, dotSize):
         for x in self.points:
             pygame.draw.ellipse(self.screen, (255, 0, 0), (x[0] - dotSize / 2, x[1] - dotSize / 2, dotSize, dotSize))
 
-    def drawTree(self):
-        return "Complete"
 
 
     def subDivide(self, sleeptime):
+        print("Ran again")
         if self.variant == 0:
             pygame.time.delay(sleeptime)
             if len(self.points) > self.max and self.root is True:
