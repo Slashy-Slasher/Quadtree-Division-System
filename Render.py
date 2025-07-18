@@ -12,11 +12,22 @@ class Render:
     #        pygame.draw.circle(screen, x.color, pygame.Vector2(x.getPosition())+pygame.Vector2(CURRENT_OFFSET[0], CURRENT_OFFSET[1]), x.radius)
 
     def renderPlanets(self, screen, pixelArray, CURRENT_OFFSET, zoom):
+        center = pygame.Vector2(screen.get_width() // 2, screen.get_height() // 2)
         for x in pixelArray:
             world_pos = pygame.Vector2(x.getPosition())
-            screen_pos = (world_pos + pygame.Vector2(CURRENT_OFFSET)) * zoom
+            screen_pos = (world_pos + pygame.Vector2(CURRENT_OFFSET)) * zoom + center
             scaled_radius = max(1, int(x.radius * zoom))
             pygame.draw.circle(screen, x.color, screen_pos, scaled_radius)
+
+    def renderQuadtree(self, screen, lineHistory, CURRENT_OFFSET, zoom):
+        center = pygame.Vector2(screen.get_width() // 2, screen.get_height() // 2)
+        for line in lineHistory:
+            if len(line) == 2:
+                start = pygame.Vector2(line[0])
+                end = pygame.Vector2(line[1])
+                screen_start = (start + pygame.Vector2(CURRENT_OFFSET)) * zoom + center
+                screen_end = (end + pygame.Vector2(CURRENT_OFFSET)) * zoom + center
+                pygame.draw.line(screen, (0, 0, 0), screen_start, screen_end, 1)
 
     #def draw_history(self, screen, pixelArray, CURRENT_OFFSET, zoom):
     #    for x in pixelArray:
