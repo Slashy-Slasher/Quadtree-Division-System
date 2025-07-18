@@ -17,16 +17,20 @@ pygame.display.set_caption('Barnes-Hut')
 Rend = Render("test")
 screen.fill(backColor)
 dotSize = 3
-SIZE = 2000
+SIZE = resolution[0]
 gravitational_constant = .01  # Gravitational Constant [Set to .01 by default]
-render_quadtree = False
+render_quadtree = True
 clock = pygame.time.Clock()
+telemetry_enabled = False
+zoom_level = 1
+threshold_angle = .5
 
 def alignPoints(pixelArray):
     points = []
     for x in pixelArray:
         points.append(x.getPosition())
     return points
+
 
 def pixelArrayGrouping(pixelArray, leafList): #This method takes the 2d Coordinates from the quad tree and groups the pixel array
     position_hash = {pixel.getPosition(): pixel for pixel in pixelArray}
@@ -39,7 +43,7 @@ def pixelArrayGrouping(pixelArray, leafList): #This method takes the 2d Coordina
             if pixel:
                 group.append(pixel)
         grouped_pixelArray.append(group)  # Add group for this leaf
-    if(len(grouped_pixelArray) < 1):
+    if len(grouped_pixelArray) < 1:
         grouped_pixelArray.append(pixelArray)
         return grouped_pixelArray
     return grouped_pixelArray
@@ -60,19 +64,22 @@ def findCenterOfMass(pixelArray):
     return com
 
 def redrawQuadTree(pixelArray, size):
-    tree = QuadTree(-size, -size, size, size, alignPoints(pixelArray), screen,0, render_quadtree)  # Change Points to Align Points
-    tree.out_of_bounds(pixelArray)
+    tree = QuadTree(-size, -size, size, size, alignPoints(pixelArray), screen,0, render_quadtree, 1, pixelArray)  # Change Points to Align Points
+    tree.out_of_bounds(tree.planets_in_sector)
+    history = tree.subDivide(0)
 
     #Rendering pipeline
-    Rend.renderPlanets(screen, pixelArray, pygame.Vector2(0, 0), .2)
     #Rend.draw_history(screen, pixelArray, pygame.Vector2(0, 0))
-    #Calling the tree to recursively divide
-    tree.subDivide(0)
+    Rend.renderPlanets(screen, pixelArray, pygame.Vector2(0, 0), zoom_level)
+    #Rend.renderQuadtree(screen, history, pygame.Vector2(0, 0), zoom_level)
+    #pygame.display.flip()
     array = QuadTree.helperDFS3(tree, tree)    #Should contain all the relevant data from the struct
     return array, tree.rootSize
 
 
 #Testing more "efficient" method however results are varied
+#Turns out they were varied because the program was still running n^2 notation, not because of any for loop combo, but
+#Rather that the threshold value was always set to the minimum; degenerating the algorithm back to n^2
 def gravitational_calculation_faster(g, nested_pixel_array):
     for cluster in nested_pixel_array:
         for i, planet1 in enumerate(cluster):
@@ -138,26 +145,33 @@ pixelArray = [
     pixel(sun_mass, (resolution[0] / 2+1700, resolution[1] / 2 - 2+1700), (1, 0), 0, (255, 255, 0), 100, True),
     pixel(sun_mass, (resolution[0] / 2+3500, resolution[1] / 2 - 2+3500), (-1, 0), 0, (255, 255, 0), 100, True),
 
-    #pixel(0, (resolution[0]/2+500, resolution[1]/2-2), (0,0), 0, (255,255,0), 100, True)
-        #pixel(30, (resolution[0]/2+100, resolution[1]/2), (0, 1), 0, (255,0,0),5, False),
-        #pixel(30, (resolution[0]/2+500, resolution[1]/2), (0, 1), 2, (255,0,0),5, False),
     ]
 
-#pixelArray.append(pixelArray[0].form_satellite(gravitational_constant, 300))
-#pixelArray.append(pixelArray[0].form_satellite(gravitational_constant, randint(pixelArray[0].radius+50, 1000)))
-#pixelArray.append(pixelArray[0].form_satellite(gravitational_constant, 300))
 
-#for x in range(1000):
+for _ in range(30):
+    x = random.randint(-500, 500)
+    y = random.randint(-500, 500)
+    dx = 0
+    dy = 0
+    mass = random.randint(10, 200)
+    diameter = random.randint(5, 20)
+    color = (random.randint(100, 255), random.randint(100, 255), random.randint(100, 255))
+    locked = True
+    pixelArray.append(pixel(mass, (x, y), (dx, dy), 0, color, diameter, locked))
+
+
+
+#for x in range(100):
 #    pixelArray.append(pixelFactory())
 
 #for x in range(2000):   #Number of planets to be "Spawned"
 #    pixelArray.append(pixelFactory2(0))
 
-for x in range(750):   #Number of planets to be "Spawned"
-    pixelArray.append(pixelFactory2(0, 1))
+#for x in range(2000):   #Number of planets to be "Spawned"
+#    pixelArray.append(pixelFactory2(0, 50, 1))
 
-for x in range(750):   #Number of planets to be "Spawned"
-    pixelArray.append(pixelFactory2(1, -1))
+#for x in range(2000):   #Number of planets to be "Spawned"
+#    pixelArray.append(pixelFactory2(1, 50, -1))
 
 
 for x in pixelArray:    #Initializes the force vectors
@@ -175,50 +189,55 @@ while running:
             running = False
     clock.tick(60)
     screen.fill((0, 0, 0))  # <<< Clear the screen here
-    print(f'Number of Pixel present: {(len(pixelArray))}')
 
-    print("-----------------------------")
-    start_ticks = pygame.time.get_ticks()
-    array, rootSize = redrawQuadTree(pixelArray, SIZE)  #Draws out the quadtree and creates the game window, returns the leaf array
-    SIZE = rootSize
-    end_ticks = pygame.time.get_ticks()
-    quadtree_time = end_ticks - start_ticks
-    total_quadTree_time += quadtree_time
-    print(f"Quadtree time: {quadtree_time} milliseconds")
+    if telemetry_enabled:
+        print(f'Number of Pixel present: {(len(pixelArray))}')
+        print("-----------------------------")
+        start_ticks = pygame.time.get_ticks()
+        array, tree, lineHistory = redrawQuadTree(pixelArray, SIZE)  #Draws out the quadtree and creates the game window, returns the leaf array
+        SIZE = tree.rootSize
+        end_ticks = pygame.time.get_ticks()
+        quadtree_time = end_ticks - start_ticks
+        total_quadTree_time += quadtree_time
+        print(f"Quadtree time: {quadtree_time} milliseconds")
+        start_ticks = pygame.time.get_ticks()
+        nested_pixel_array = universe_tick(pixelArray,array, tree)  # Runs the model of the simulation based on the leaf array
+        end_ticks = pygame.time.get_ticks()
+        tick_time = end_ticks - start_ticks
+        total_tick_time += tick_time
+        print(f"Tick time: {tick_time} milliseconds")
+
+        start_ticks = pygame.time.get_ticks()
+        #collision_tick(pixelArray, nested_pixel_array)  # Currently disabled for visuals
+        end_ticks = pygame.time.get_ticks()
+        collision_tick_time = end_ticks - start_ticks
+        total_collision_time += collision_tick_time
+        print(f"Collision time: {collision_tick_time} milliseconds")
+        print(f'Operational Time Cost {quadtree_time + tick_time + collision_tick_time} milliseconds')
+        print("-----------------------------")
+        total_operations += 1
+    else:
+        array, tree, lineHistory = redrawQuadTree(pixelArray, SIZE)  #Draws out the quadtree and creates the game window, returns the leaf array
+        SIZE = tree.rootSize
+        nested_pixel_array = universe_tick(pixelArray,array, tree)  # Runs the model of the simulation based on the leaf array
+        #collision_tick(pixelArray, nested_pixel_array)  # Currently disabled for visuals
 
 
-    start_ticks = pygame.time.get_ticks()
-    nested_pixel_array = universe_tick(pixelArray, array)             #Runs the model of the simulation based on the leaf array
-    end_ticks = pygame.time.get_ticks()
-    tick_time = end_ticks - start_ticks
-    total_tick_time += tick_time
-    print(f"Tick time: {tick_time} milliseconds")
 
-    start_ticks = pygame.time.get_ticks()
-    #collision_tick(pixelArray, nested_pixel_array)     #Currently disabled for visuals
-    end_ticks = pygame.time.get_ticks()
-    collision_tick_time = end_ticks - start_ticks
-    total_collision_time += collision_tick_time
-    print(f"Collision time: {collision_tick_time} milliseconds")
-    print(f'Operational Time Cost {quadtree_time+tick_time+collision_tick_time} milliseconds')
-    print("-----------------------------")
 
-    print(pixelArray[0].getPosition())
-    print(pixelArray[1].getPosition())
-
-    total_operations += 1
-
-    #Rend.scale_world(screen, .5)
-
+    #Rend.scale_world(screen, .5)   #Use this for the minimap, will have to come back to it though
+    print("End of Tick")
     pygame.display.flip()
+    pygame.time.wait(3000)
 
 
-print(f'Total QuadTree time: {total_quadTree_time} milliseconds')
-print(f'Total Tick time: {total_tick_time} milliseconds')
-print(f'Total Collision time: {total_collision_time} milliseconds')
-total_time = total_quadTree_time+total_tick_time+total_collision_time
-print(f'Total Operational time: {total_time} milliseconds')
-print(f'Total Operations time: {total_operations} ticks')
-print("----------------------------------------------------")
-print(f'Average TPS(Ticks per second): {total_tick_time/total_operations} milliseconds')
-print(f'Average FPS(Frames per second): {1000/(total_tick_time/total_operations)} FPS')
+if telemetry_enabled:
+    print(f'Total QuadTree time: {total_quadTree_time} milliseconds')
+    print(f'Total Tick time: {total_tick_time} milliseconds')
+    print(f'Total Collision time: {total_collision_time} milliseconds')
+    total_time = total_quadTree_time+total_tick_time+total_collision_time
+    print(f'Total Operational time: {total_time} milliseconds')
+    print(f'Total Operations: {total_operations} ticks')
+    print("----------------------------------------------------")
+    #print(f'Average TPS(Ticks per second): {total_tick_time/total_operations} milliseconds')
+    print(f'Average FPS(Frames per second): {1000/(total_tick_time/total_operations)} FPS')
