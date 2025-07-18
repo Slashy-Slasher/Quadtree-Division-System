@@ -74,7 +74,39 @@ def redrawQuadTree(pixelArray, size):
     #Rend.renderQuadtree(screen, history, pygame.Vector2(0, 0), zoom_level)
     #pygame.display.flip()
     array = QuadTree.helperDFS3(tree, tree)    #Should contain all the relevant data from the struct
-    return array, tree.rootSize
+
+    return array, tree, history
+
+
+#The threshold_angle is used to figure out the level of estimation needed
+def gravitational_calculator(g, tree, leafList, pixelArray):
+    #use s/d <
+
+    #Create a linear path of planets to be iterated over (N)
+    #For each planet in the list, start with the 4 children node of the root then compare s/d to threshold_angle
+    #If the equation s/d < theta is true, the planet is far enough away to use the major approximation
+    #elif the s/d > theta, break down that child_node into it's children and repeat the process till s/d < theta = True
+    #AND if a leaf node is found, ensure that the leaf node doesn't contain the current planet.
+    #Apply the force between the center of mass and the planet.
+
+    sectors = []
+    #print(len(leafList))
+    for x in leafList:                  #This loops through every leaflist in the systen
+        #print(f'{x.planets_in_sector}')
+        #print(x.width)
+        print(len(leafList))
+
+        for y in x.planets_in_sector:   #This loops through every planet in the systen
+            sectors = tree.return_children()
+            for z in sectors:
+                if math.dist(z.COM, y.getPosition()) != 0:
+                    if(z.width / math.dist(z.COM, y.getPosition())) > threshold_angle:
+                        sectors.extend(z.return_children())
+                    elif (z.width / math.dist(z.COM, y.getPosition())) < threshold_angle:
+                        temp_pixel = pixel(z.mass, z.COM, (0, 0),0,(0,0,0), 5,True)
+                        y.gravity(g, y, temp_pixel)
+            y.applyForce()
+    return "Applied Force"
 
 
 #Testing more "efficient" method however results are varied
@@ -130,20 +162,21 @@ def pixelFactory():
     temp_pixel = pixel(30, (resolution[0]/2+random.randint(-2000, 2000), resolution[1]/2 + random.randint(-2000,2000)), (0, 1), random.randint(-5,5), (random.randint(0, 255),random.randint(0, 255),random.randint(0, 255)),5, False)
     return temp_pixel
 
-def pixelFactory2(index, direction):
-    return pixelArray[index].form_satellite(gravitational_constant, randint(int(pixelArray[index].radius)+50, 1000), direction)
+def pixelFactory2(index, spacing, direction):
+    return pixelArray[index].form_satellite(gravitational_constant, randint(int(pixelArray[index].radius)+50, spacing), direction)
 
 
-def universe_tick(pixelArray, array):   #Functions as the primary driver of the Barnes-Hut Simulation
+def universe_tick(pixelArray, array, tree):   #Functions as the primary driver of the Barnes-Hut Simulation
     nested_pixel_array = pixelArrayGrouping(pixelArray, array) #Merges the information from the two lists together
-    gravitational_calculation_faster(gravitational_constant, nested_pixel_array)
+    gravitational_calculator(gravitational_constant, tree, array, pixelArray)
+    #gravitational_calculation_faster(gravitational_constant, nested_pixel_array)
     return nested_pixel_array
 
-sun_mass = 1000000
+sun_mass = 10000000000
 pixelArray = [
         #pixel(200*10000, (resolution[0]/2, resolution[1]/2-2), (1,0), 0, (255,255,0), 100, True),
-    pixel(sun_mass, (resolution[0] / 2+1700, resolution[1] / 2 - 2+1700), (1, 0), 0, (255, 255, 0), 100, True),
-    pixel(sun_mass, (resolution[0] / 2+3500, resolution[1] / 2 - 2+3500), (-1, 0), 0, (255, 255, 0), 100, True),
+    #pixel(sun_mass, (resolution[0] / 2 - 2500, resolution[1] / 2 - 2500), (1, 0), 0, (255, 255, 0), 100, True),
+    #pixel(sun_mass, (resolution[0] / 2 + 2500, resolution[1] / 2 + 2500), (1, 0), 0, (255, 255, 0), 100, True),
 
     ]
 
