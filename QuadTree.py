@@ -63,6 +63,20 @@ class QuadTree:
             for x in self.planets_in_sector:
                 self.mass += x.mass
 
+    def calculate_sector_center_of_mass(self):
+        numeratorX = 0
+        numeratorY = 0
+        denominator = 0
+        com = 0
+        for x in self.planets_in_sector:
+            numeratorX += x.getPosition()[0] * x.getMass()
+            numeratorY += x.getPosition()[1] * x.getMass()
+        for x in self.planets_in_sector:
+            denominator += x.getMass()
+        if denominator != 0:
+            com = (numeratorX / denominator, numeratorY / denominator)
+        return com
+
 
     def advanced_points_in(self, x0, y0, x1, y1, object_array):
         newPoints = []
@@ -112,8 +126,7 @@ class QuadTree:
                     storage.append(child)
                 else:
                     storage.extend(QuadTree.helperDFS3(self, child))  # Flatten the result of recursion
-        if len(storage) == 0:
-            #print(f'Test: {node.getPoints()}')
+        if len(storage) == 0 and node.isLeaf():
             storage.append(node)
         return storage
 
@@ -183,7 +196,7 @@ class QuadTree:
         if self.BRC is not None:
             exiting_children.append(self.BRC)
 
-        print(self.TLC, self.TRC, self.BLC, self.BRC)
+        #print(self.TLC, self.TRC, self.BLC, self.BRC)
 
 
         return exiting_children
@@ -205,12 +218,6 @@ class QuadTree:
         color = (255, 255, 255)
         p0, p1, p2, p3 = (qT.w / 2, qT.y), (qT.w / 2, qT.h), (qT.x, (qT.h / 2 + qT.y / 2)), (
             qT.w, (qT.h / 2 + qT.y / 2))
-        pygame.draw.line(qT.screen, black, p0, p1, thickness)
-        pygame.draw.line(qT.screen, black, p2, p3, thickness)
-
-
-    def draw_to_history(self):
-        print()
         pygame.draw.line(qT.screen, color, p0, p1, thickness)
         pygame.draw.line(qT.screen, color, p2, p3, thickness)
         print("Drew Sublines")
