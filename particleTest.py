@@ -23,7 +23,7 @@ render_quadtree = False
 clock = pygame.time.Clock()
 telemetry_enabled = True
 zoom_level = .1
-threshold_angle = 1000
+threshold_angle = 10
 
 def alignPoints(pixelArray):
     points = []
@@ -72,7 +72,7 @@ def redrawQuadTree(pixelArray, size):
     #Rendering pipeline
     #Rend.draw_history(screen, pixelArray, pygame.Vector2(0, 0))
     Rend.renderPlanets(screen, pixelArray, pygame.Vector2(0, 0), zoom_level)
-    #Rend.renderQuadtree(screen, history, pygame.Vector2(0, 0), zoom_level)
+    Rend.renderQuadtree(screen, history, pygame.Vector2(0, 0), zoom_level)
     #pygame.display.flip()
     array = QuadTree.helperDFS3(tree, tree)    #Should contain all the relevant data from the struct
 
@@ -80,7 +80,7 @@ def redrawQuadTree(pixelArray, size):
 
 
 #The threshold_angle is used to figure out the level of estimation needed
-def gravitational_calculator(g, tree, leafList):
+def gravitational_calculator(g, tree, leafList, pixelArray):
     #use s/d <
 
     #Create a linear path of planets to be iterated over (N)
@@ -93,18 +93,27 @@ def gravitational_calculator(g, tree, leafList):
 
     sectors = []
     #print(len(leafList))
-    for x in leafList:                  #This loops through every leaflist in the system
-        for y in x.planets_in_sector:   #This loops through every planet in the systen
-            sectors = tree.return_children()
-            for z in sectors:
-                if math.dist(z.COM, y.getPosition()) != 0:
-                    if(z.width / math.dist(z.COM, y.getPosition())) > threshold_angle:
-                        #print(z.width / math.dist(z.COM, y.getPosition()) > threshold_angle)
-                        sectors.extend(z.return_children())
-                    elif (z.width / math.dist(z.COM, y.getPosition())) < threshold_angle:
-                        temp_pixel = pixel(z.mass, z.COM, (0, 0),0,(0,0,0), 5,True)
-                        y.gravity(g, y, temp_pixel)
-            y.applyForce()
+    for leaf in leafList:                  #This loops through every leaflist in the system
+        for planet in leaf.planets_in_sector:   #This loops through every planet in the systen
+            #Can functionally ignore above
+            sectors = tree.return_children()    #4 root children
+
+            for current_node in sectors:
+                distance = math.dist(current_node.COM, planet.getPosition()) #Finds the distance between x planet and y COM
+                if distance != 0 and math.dist(current_node.COM, leaf.COM) != 0:   #Far-Off Sectors
+                    if(current_node.width / distance) > threshold_angle:
+                        sectors.extend(current_node.return_children())
+                    else: #(current_node.width / math.dist(current_node.COM, planet.getPosition())) < threshold_angle:
+                        temp_pixel = pixel(current_node.mass, current_node.COM, (0, 0),0,(0,0,0), 5,True)
+                        planet.gravity(g, planet, temp_pixel)
+
+                else:   #Intra-Sector Calculation
+                    for temp_planet in current_node.planets_in_sector:
+                        for comparison_planet in current_node.planets_in_sector:
+                            if (temp_planet != comparison_planet):
+                                #print("Manual Compute")
+                                temp_planet.gravity(g, temp_planet, comparison_planet)
+            planet.applyForce()
 
 
 #Testing more "efficient" method however results are varied
@@ -169,7 +178,7 @@ def pixelFactory2(index, spacing, direction):
 
 def universe_tick(pixelArray, array, tree):   #Functions as the primary driver of the Barnes-Hut Simulation
     nested_pixel_array = pixelArrayGrouping(pixelArray, array) #Merges the information from the two lists together
-    gravitational_calculator(gravitational_constant, tree, array)
+    gravitational_calculator(gravitational_constant, tree, array, pixelArray)
     return nested_pixel_array
 
 sun_mass = 10000000000
@@ -200,8 +209,8 @@ pixelArray = [
 #for x in range(100):
 #    pixelArray.append(pixelFactory())
 
-#for x in range(2000):   #Number of planets to be "Spawned"
-#    pixelArray.append(pixelFactory2(0, 50, 1))
+for x in range(2000):   #Number of planets to be "Spawned"
+    pixelArray.append(pixelFactory2(0, 5000, 1))
 
 for x in range(2000):   #Number of planets to be "Spawned"
     pixelArray.append(pixelFactory2(0, 5000, -1))

@@ -13,7 +13,7 @@ class QuadTree:
         self.w = w
         self.h = h
         self.width = abs(x-w)
-        self.max = 50 # Defines points which can exist before square subdivision
+        self.max = 30 # Defines points which can exist before square subdivision
         self.theta = 0
         self.screen = screen
         self.depth = depth
@@ -244,7 +244,7 @@ class QuadTree:
                 self.root = False
                 self.depth = self.depth + 1
 
-            if len(self.points) > self.max and self.depth < 100000:
+            if len(self.points) > self.max and self.depth < 100:
                 if len(self.pointsIn(self.x, self.y, (self.x + self.w) / 2, (self.y + self.h) / 2, self.points)) > self.max:
                     self.TLC = QuadTree(self.x, self.y, (self.x + self.w) / 2, (self.y + self.h) / 2, self.points,
                                         self.screen, self.depth + 1, self.rendering, self.variant, self.pixelArray)
