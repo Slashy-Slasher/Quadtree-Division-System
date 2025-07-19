@@ -13,7 +13,7 @@ class QuadTree:
         self.w = w
         self.h = h
         self.width = abs(x-w)
-        self.max = 2 # Defines points which can exist before square subdivision
+        self.max = 50 # Defines points which can exist before square subdivision
         self.theta = 0
         self.screen = screen
         self.depth = depth
@@ -166,12 +166,17 @@ class QuadTree:
             else:
                 return 0
 
-    def find_furthest_point_from_center(self, pixelArray):
-        return max(pixelArray, key=lambda x: pygame.math.Vector2(x.position).length())
+    def find_furthest_point_from_center(self, pixelArray, center=(0, 0)):
+        center_vec = pygame.math.Vector2(center)
+        return max(pixelArray, key=lambda x: (pygame.math.Vector2(x.position) - center_vec).length())
 
     def out_of_bounds(self, pixelArray):
         furthest_point = (self.find_furthest_point_from_center(pixelArray)).position
-        if not(-self.rootSize < furthest_point[0] < self.rootSize and -self.rootSize < furthest_point[1] < self.rootSize):
+        #print(f'furthest_point[0]')
+        #print(f'{furthest_point} vs {self.width}')
+        if abs(furthest_point[0]) > self.rootSize or abs(furthest_point[1]) > self.rootSize:
+        #if not(-self.rootSize < furthest_point[0] < self.rootSize and -self.rootSize < furthest_point[1] < self.rootSize):
+            #print("passed")
             self.adjust_borders()
 
     def adjust_borders(self):
@@ -324,7 +329,7 @@ class QuadTree:
 
 
                 #Start of division
-            if len(self.planets_in_sector) > self.max and self.depth < 10000:
+            if len(self.planets_in_sector) > self.max and self.depth < 1000:
                 #TLC
                 if len(self.advanced_points_in(self.x, self.y, (self.x + self.w) / 2, (self.y + self.h) / 2,
                                      self.planets_in_sector)) > self.max:
