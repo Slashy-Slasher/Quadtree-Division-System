@@ -21,13 +21,15 @@ class Render:
 
     def renderQuadtree(self, screen, lineHistory, CURRENT_OFFSET, zoom):
         center = pygame.Vector2(screen.get_width() // 2, screen.get_height() // 2)
-        for line in lineHistory:
-            if len(line) == 2:
-                start = pygame.Vector2(line[0])
-                end = pygame.Vector2(line[1])
-                screen_start = (start + pygame.Vector2(CURRENT_OFFSET)) * zoom + center
-                screen_end = (end + pygame.Vector2(CURRENT_OFFSET)) * zoom + center
-                pygame.draw.line(screen, (0, 0, 0), screen_start, screen_end, 1)
+        #print(f'Line History Length: {len(lineHistory)}')
+        #print(f'Line History: {lineHistory}')
+        for line_set in lineHistory:
+            for i in range(0, len(line_set), 2):
+                start = pygame.Vector2(line_set[i])
+                end = pygame.Vector2(line_set[i + 1])
+                line_start = (start * zoom) + pygame.Vector2(CURRENT_OFFSET) + center
+                line_end = (end * zoom) + pygame.Vector2(CURRENT_OFFSET) + center
+                pygame.draw.line(screen, (255, 255, 255), line_start, line_end, 1)
 
     #def draw_history(self, screen, pixelArray, CURRENT_OFFSET, zoom):
     #    for x in pixelArray:

@@ -18,11 +18,11 @@ Rend = Render("test")
 screen.fill(backColor)
 dotSize = 3
 SIZE = resolution[0]
-gravitational_constant = .01  # Gravitational Constant [Set to .01 by default]
-render_quadtree = True
+gravitational_constant = .1  # Gravitational Constant [Set to .01 by default]
+render_quadtree = False
 clock = pygame.time.Clock()
 telemetry_enabled = False
-zoom_level = 1
+zoom_level = .5
 threshold_angle = .5
 
 def alignPoints(pixelArray):
@@ -71,7 +71,7 @@ def redrawQuadTree(pixelArray, size):
     #Rendering pipeline
     #Rend.draw_history(screen, pixelArray, pygame.Vector2(0, 0))
     Rend.renderPlanets(screen, pixelArray, pygame.Vector2(0, 0), zoom_level)
-    #Rend.renderQuadtree(screen, history, pygame.Vector2(0, 0), zoom_level)
+    Rend.renderQuadtree(screen, history, pygame.Vector2(0, 0), zoom_level)
     #pygame.display.flip()
     array = QuadTree.helperDFS3(tree, tree)    #Should contain all the relevant data from the struct
 
@@ -94,8 +94,7 @@ def gravitational_calculator(g, tree, leafList, pixelArray):
     for x in leafList:                  #This loops through every leaflist in the systen
         #print(f'{x.planets_in_sector}')
         #print(x.width)
-        print(len(leafList))
-
+        #print(len(leafList))
         for y in x.planets_in_sector:   #This loops through every planet in the systen
             sectors = tree.return_children()
             for z in sectors:
@@ -175,6 +174,8 @@ def universe_tick(pixelArray, array, tree):   #Functions as the primary driver o
 sun_mass = 10000000000
 pixelArray = [
         #pixel(200*10000, (resolution[0]/2, resolution[1]/2-2), (1,0), 0, (255,255,0), 100, True),
+        pixel(200 * 10000, (0,0), (1, 0), 0, (255, 255, 0), 100, True),
+
     #pixel(sun_mass, (resolution[0] / 2 - 2500, resolution[1] / 2 - 2500), (1, 0), 0, (255, 255, 0), 100, True),
     #pixel(sun_mass, (resolution[0] / 2 + 2500, resolution[1] / 2 + 2500), (1, 0), 0, (255, 255, 0), 100, True),
 
@@ -261,7 +262,7 @@ while running:
     #Rend.scale_world(screen, .5)   #Use this for the minimap, will have to come back to it though
     print("End of Tick")
     pygame.display.flip()
-    pygame.time.wait(3000)
+    #pygame.time.wait(3000)
 
 
 if telemetry_enabled:
