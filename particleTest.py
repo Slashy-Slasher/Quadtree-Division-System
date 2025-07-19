@@ -17,13 +17,13 @@ pygame.display.set_caption('Barnes-Hut')
 Rend = Render("test")
 screen.fill(backColor)
 dotSize = 3
-SIZE = resolution[0]
+SIZE = 80000
 gravitational_constant = .1  # Gravitational Constant [Set to .01 by default]
 render_quadtree = False
 clock = pygame.time.Clock()
-telemetry_enabled = False
-zoom_level = .5
-threshold_angle = .5
+telemetry_enabled = True
+zoom_level = .1
+threshold_angle = 1000
 
 def alignPoints(pixelArray):
     points = []
@@ -66,12 +66,13 @@ def findCenterOfMass(pixelArray):
 def redrawQuadTree(pixelArray, size):
     tree = QuadTree(-size, -size, size, size, alignPoints(pixelArray), screen,0, render_quadtree, 1, pixelArray)  # Change Points to Align Points
     tree.out_of_bounds(tree.planets_in_sector)
+
     history = tree.subDivide(0)
 
     #Rendering pipeline
     #Rend.draw_history(screen, pixelArray, pygame.Vector2(0, 0))
     Rend.renderPlanets(screen, pixelArray, pygame.Vector2(0, 0), zoom_level)
-    Rend.renderQuadtree(screen, history, pygame.Vector2(0, 0), zoom_level)
+    #Rend.renderQuadtree(screen, history, pygame.Vector2(0, 0), zoom_level)
     #pygame.display.flip()
     array = QuadTree.helperDFS3(tree, tree)    #Should contain all the relevant data from the struct
 
@@ -79,7 +80,7 @@ def redrawQuadTree(pixelArray, size):
 
 
 #The threshold_angle is used to figure out the level of estimation needed
-def gravitational_calculator(g, tree, leafList, pixelArray):
+def gravitational_calculator(g, tree, leafList):
     #use s/d <
 
     #Create a linear path of planets to be iterated over (N)
@@ -87,25 +88,23 @@ def gravitational_calculator(g, tree, leafList, pixelArray):
     #If the equation s/d < theta is true, the planet is far enough away to use the major approximation
     #elif the s/d > theta, break down that child_node into it's children and repeat the process till s/d < theta = True
     #AND if a leaf node is found, ensure that the leaf node doesn't contain the current planet.
-    #Apply the force between the center of mass and the planet.
+    #Apply the
+    # between the center of mass and the planet.
 
     sectors = []
     #print(len(leafList))
-    for x in leafList:                  #This loops through every leaflist in the systen
-        #print(f'{x.planets_in_sector}')
-        #print(x.width)
-        #print(len(leafList))
+    for x in leafList:                  #This loops through every leaflist in the system
         for y in x.planets_in_sector:   #This loops through every planet in the systen
             sectors = tree.return_children()
             for z in sectors:
                 if math.dist(z.COM, y.getPosition()) != 0:
                     if(z.width / math.dist(z.COM, y.getPosition())) > threshold_angle:
+                        #print(z.width / math.dist(z.COM, y.getPosition()) > threshold_angle)
                         sectors.extend(z.return_children())
                     elif (z.width / math.dist(z.COM, y.getPosition())) < threshold_angle:
                         temp_pixel = pixel(z.mass, z.COM, (0, 0),0,(0,0,0), 5,True)
                         y.gravity(g, y, temp_pixel)
             y.applyForce()
-    return "Applied Force"
 
 
 #Testing more "efficient" method however results are varied
@@ -158,7 +157,10 @@ def collision_tick(pixelArray, nested_pixel_array):
 
 
 def pixelFactory():
-    temp_pixel = pixel(30, (resolution[0]/2+random.randint(-2000, 2000), resolution[1]/2 + random.randint(-2000,2000)), (0, 1), random.randint(-5,5), (random.randint(0, 255),random.randint(0, 255),random.randint(0, 255)),5, False)
+    temp_pixel = pixel(30, (resolution[0]/2+random.randint(-2000, 2000),
+                        resolution[1]/2 + random.randint(-2000,2000)),
+                       (0, 1), random.randint(-5,5), (random.randint(0, 255),
+                        random.randint(0, 255),random.randint(0, 255)),5, False)
     return temp_pixel
 
 def pixelFactory2(index, spacing, direction):
@@ -167,14 +169,15 @@ def pixelFactory2(index, spacing, direction):
 
 def universe_tick(pixelArray, array, tree):   #Functions as the primary driver of the Barnes-Hut Simulation
     nested_pixel_array = pixelArrayGrouping(pixelArray, array) #Merges the information from the two lists together
-    gravitational_calculator(gravitational_constant, tree, array, pixelArray)
-    #gravitational_calculation_faster(gravitational_constant, nested_pixel_array)
+    gravitational_calculator(gravitational_constant, tree, array)
     return nested_pixel_array
 
 sun_mass = 10000000000
 pixelArray = [
-        #pixel(200*10000, (resolution[0]/2, resolution[1]/2-2), (1,0), 0, (255,255,0), 100, True),
-        pixel(200 * 10000, (0,0), (1, 0), 0, (255, 255, 0), 100, True),
+        pixel(sun_mass, (1,1), (1,0), 0, (255,255,0), 100, True),
+        #pixel(sun_mass, (100, 0), (1, 0), 0, (255, 255, 0), 100, True),
+
+    #pixel(200 * 10000, (0,0), (1, 0), 0, (255, 255, 0), 100, True),
 
     #pixel(sun_mass, (resolution[0] / 2 - 2500, resolution[1] / 2 - 2500), (1, 0), 0, (255, 255, 0), 100, True),
     #pixel(sun_mass, (resolution[0] / 2 + 2500, resolution[1] / 2 + 2500), (1, 0), 0, (255, 255, 0), 100, True),
@@ -182,16 +185,15 @@ pixelArray = [
     ]
 
 
-for _ in range(30):
-    x = random.randint(-500, 500)
-    y = random.randint(-500, 500)
-    dx = 0
-    dy = 0
-    mass = random.randint(10, 200)
-    diameter = random.randint(5, 20)
-    color = (random.randint(100, 255), random.randint(100, 255), random.randint(100, 255))
-    locked = True
-    pixelArray.append(pixel(mass, (x, y), (dx, dy), 0, color, diameter, locked))
+#for _ in range(300):
+#    x = random.randint(-500, 500)
+#    y = random.randint(-500, 500)
+#    dx = 0
+#    dy = 0
+#    mass = random.randint(10, 200)
+#    diameter = random.randint(5, 20)
+#    color = (random.randint(100, 255), random.randint(100, 255), random.randint(100, 255))
+#    pixelArray.append(pixel(mass, (x, y), (dx, dy), 0, color, diameter, False))
 
 
 
@@ -199,13 +201,10 @@ for _ in range(30):
 #    pixelArray.append(pixelFactory())
 
 #for x in range(2000):   #Number of planets to be "Spawned"
-#    pixelArray.append(pixelFactory2(0))
-
-#for x in range(2000):   #Number of planets to be "Spawned"
 #    pixelArray.append(pixelFactory2(0, 50, 1))
 
-#for x in range(2000):   #Number of planets to be "Spawned"
-#    pixelArray.append(pixelFactory2(1, 50, -1))
+for x in range(2000):   #Number of planets to be "Spawned"
+    pixelArray.append(pixelFactory2(0, 5000, -1))
 
 
 for x in pixelArray:    #Initializes the force vectors
@@ -253,16 +252,13 @@ while running:
     else:
         array, tree, lineHistory = redrawQuadTree(pixelArray, SIZE)  #Draws out the quadtree and creates the game window, returns the leaf array
         SIZE = tree.rootSize
+        print(SIZE)
         nested_pixel_array = universe_tick(pixelArray,array, tree)  # Runs the model of the simulation based on the leaf array
         #collision_tick(pixelArray, nested_pixel_array)  # Currently disabled for visuals
+        #Rend.scale_world(screen, .5)   #Use this for the minimap, will have to come back to it though
 
-
-
-
-    #Rend.scale_world(screen, .5)   #Use this for the minimap, will have to come back to it though
-    print("End of Tick")
     pygame.display.flip()
-    #pygame.time.wait(3000)
+
 
 
 if telemetry_enabled:
