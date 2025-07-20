@@ -127,6 +127,10 @@ class QuadTree:
             storage.append(node)
         return storage
 
+    def points_in_treeSpace(self):
+        x = self.advanced_points_in(self.x,self.y,self.w,self.h, self.planets_in_sector)
+        return(len(x))
+
 
     #This method is used to stop planets from escaping the quadtree
     @staticmethod
