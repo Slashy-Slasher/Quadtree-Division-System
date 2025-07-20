@@ -40,8 +40,12 @@ class Render:
         else:
             color = pygame.Color(0, 255, 0)
         pygame.draw.line(screen, color, self.tuple_world_to_screen((node.x, node.y)), self.tuple_world_to_screen((node.w, node.h)))
-        pygame.draw.line(screen, color, self.tuple_world_to_screen((node.x, node.h)), self.tuple_world_to_screen((node.w, node.y)))
+        pygame.draw.line(screen, color, self.tuple_world_to_screen((node.w, node.y)), self.tuple_world_to_screen((node.x, node.h)))
 
+    def render_text(self, screen, position, text):
+        my_font = pygame.font.SysFont("Gill Sans", 20)
+        text_surface = my_font.render(text, True, pygame.Color("White"))
+        screen.blit(text_surface, position)
 
     def highlight_planet(self, screen, planet):
         pygame.draw.circle(screen, planet.color, self.tuple_world_to_screen(planet.position), self.scale_radius(50))
@@ -54,6 +58,7 @@ class Render:
 
     def tuple_world_to_screen(self, grouped_tuple):
         return pygame.Vector2(pygame.Vector2(grouped_tuple) * self.zoom) + self.CURRENT_OFFSET + self.center
+
 
     #def draw_history(self, screen, pixelArray, CURRENT_OFFSET, zoom):
     #    for x in pixelArray:
