@@ -3,6 +3,7 @@ import random
 
 import pygame
 
+
 class pixel:
     def __init__(self, mass, position, direction, force, color, diameter, isLocked):
         self.mass = mass  # Mass
@@ -39,10 +40,10 @@ class pixel:
             self.force = force
             self.gForce = self.direction * self.force
 
-    def applyForce(self):
+    def applyForce(self, dt):
         #self.position = self.force * pygame.Vector2(self.direction)
         if not self.getlockedState():
-            self.position += self.gForce
+            self.position += self.gForce * dt
             self.position_history.append(self.position)
             self.velocity_history.append(self.gForce)
             if len(self.position_history) > 100:
@@ -70,7 +71,8 @@ class pixel:
     def gravity(self, g, obj0, obj1):
         self.direction = self.getDirection(obj0.position, obj1.position)    #Normalized Direction
         if(obj0.position != obj1.position):
-            self.force = (g * obj0.mass * obj1.mass) / (math.dist(obj0.position, obj1.position) ** 2) #Force
+            if(math.dist(obj0.position, obj1.position) > (obj0.radius + obj1.radius+30)): #While collision is disabled, remove later
+                self.force = (g * obj0.mass * obj1.mass) / (math.dist(obj0.position, obj1.position) ** 2) #Force
         self.gForce += (self.direction * self.force)  #Vector Created
 
     def form_satellite(self, grav_constant, h, direction):   #forms a satellite around "self", r is desired distance
@@ -82,4 +84,4 @@ class pixel:
         new_position = direction_to_com*(self.radius+h+30)
         new_direction = pygame.Vector2(direction_to_com[1]*-1*direction, direction_to_com[0]*direction)
 
-        return pixel(30, vec1, new_direction, needed_velocity * 5, (0, random.randint(0, 150), random.randint(150, 255)), 15, False)
+        return pixel(30, vec1, new_direction, needed_velocity * 50, (0, random.randint(0, 150), random.randint(150, 255)), 15, False)
