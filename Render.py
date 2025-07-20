@@ -10,29 +10,53 @@ class Render:
         self.zoom = zoom_level
 
 
+
     #def renderPlanets(self, screen, pixelArray, radius, CURRENT_OFFSET, zoom):
     #    for x in pixelArray:
     #        pygame.draw.circle(screen, x.color, pygame.Vector2(x.getPosition())+pygame.Vector2(CURRENT_OFFSET[0], CURRENT_OFFSET[1]), x.radius)
 
-    def renderPlanets(self, screen, pixelArray, CURRENT_OFFSET, zoom):
-        center = pygame.Vector2(screen.get_width() // 2, screen.get_height() // 2)
+    def set_Offset(self, offset):
+        self.CURRENT_OFFSET_X = offset[0]
+        self.CURRENT_OFFSET_Y = offset[1]
+        self.CURRENT_OFFSET = offset
+
+    def set_zoom(self, zoom):
+        self.zoom = zoom
+
+    def renderPlanets(self, screen, pixelArray):
         for x in pixelArray:
             world_pos = pygame.Vector2(x.getPosition())
-            screen_pos = (world_pos + pygame.Vector2(CURRENT_OFFSET)) * zoom + center
-            scaled_radius = max(1, int(x.radius * zoom))
+            screen_pos = (world_pos + pygame.Vector2(self.CURRENT_OFFSET)) * self.zoom + self.center
+            scaled_radius = max(1, int(x.radius * self.zoom))
             pygame.draw.circle(screen, x.color, screen_pos, scaled_radius)
 
-    def renderQuadtree(self, screen, lineHistory, CURRENT_OFFSET, zoom):
-        center = pygame.Vector2(screen.get_width() // 2, screen.get_height() // 2)
-        #print(f'Line History Length: {len(lineHistory)}')
-        #print(f'Line History: {lineHistory}')
+    def renderQuadtree(self, screen, lineHistory, tree):
+        self.encapsulate_quadtree(screen, tree)
         for line_set in lineHistory:
             for i in range(0, len(line_set), 2):
                 start = pygame.Vector2(line_set[i])
                 end = pygame.Vector2(line_set[i + 1])
-                line_start = (start * zoom) + pygame.Vector2(CURRENT_OFFSET) + center
-                line_end = (end * zoom) + pygame.Vector2(CURRENT_OFFSET) + center
+                line_start = (start * self.zoom) + pygame.Vector2(self.CURRENT_OFFSET) + self.center
+                line_end = (end * self.zoom) + pygame.Vector2(self.CURRENT_OFFSET) + self.center
                 pygame.draw.line(screen, (255, 255, 255), line_start, line_end, 1)
+
+
+    def encapsulate_quadtree(self, screen, tree):
+        top_left = self.tuple_world_to_screen((tree.x, tree.y))
+        top_right = self.tuple_world_to_screen((tree.w, tree.y))
+        bottom_left = self.tuple_world_to_screen((tree.x, tree.h))
+        bottom_right = self.tuple_world_to_screen((tree.w, tree.h))
+
+        pygame.draw.line(screen, (255, 255, 255), top_left, top_right, 1)
+        pygame.draw.line(screen, (255, 255, 255), top_right, bottom_right, 1)
+        pygame.draw.line(screen, (255, 255, 255), bottom_right, bottom_left, 1)
+        pygame.draw.line(screen, (255, 255, 255), bottom_left, top_left, 1)
+
+
+        #line_start = (tree.x, tree.y * self.zoom) + pygame.Vector2(self.CURRENT_OFFSET) + self.center
+        #line_end = (tree.w, tree.y * self.zoom) + pygame.Vector2(self.CURRENT_OFFSET) + self.center
+        #pygame.draw.line(screen, (255, 255, 255), line_start, line_end, 1)
+
 
     def renderSquare(self, screen, node, targeted):
         if(targeted):
@@ -59,14 +83,8 @@ class Render:
     def tuple_world_to_screen(self, grouped_tuple):
         return pygame.Vector2(pygame.Vector2(grouped_tuple) * self.zoom) + self.CURRENT_OFFSET + self.center
 
-
-    #def draw_history(self, screen, pixelArray, CURRENT_OFFSET, zoom):
-    #    for x in pixelArray:
-    #        position_history = list(x.getPositionHistory())
-    #        position_history.reverse()
-    #        if (len(x.getPositionHistory()) > 2):
-    #            for i in range(1, len(position_history)):
-    #                pygame.draw.line(screen, (255, 255, 255), position_history[i], position_history[2], 1)
+    def tuple_screen_to_world(self, grouped_tuple):
+        return (pygame.Vector2(grouped_tuple) - self.center - self.CURRENT_OFFSET)/self.zoom
 
     def scale_world(self, screen, zoom):
         scaled_world = pygame.transform.smoothscale(
