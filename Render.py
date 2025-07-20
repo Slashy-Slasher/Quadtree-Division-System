@@ -2,9 +2,12 @@ import pygame
 import random
 
 class Render:
-    def __init__(self, name):
-        CURRENT_OFFSET_X = 0
-        CURRENT_OFFSET_Y = 0
+    def __init__(self, name, center, offset, zoom_level):
+        self.CURRENT_OFFSET_X = offset[0]
+        self.CURRENT_OFFSET_Y = offset[1]
+        self.CURRENT_OFFSET = pygame.Vector2(self.CURRENT_OFFSET_X, self.CURRENT_OFFSET_Y)
+        self.center = pygame.Vector2(center)
+        self.zoom = zoom_level
 
 
     #def renderPlanets(self, screen, pixelArray, radius, CURRENT_OFFSET, zoom):
@@ -30,6 +33,27 @@ class Render:
                 line_start = (start * zoom) + pygame.Vector2(CURRENT_OFFSET) + center
                 line_end = (end * zoom) + pygame.Vector2(CURRENT_OFFSET) + center
                 pygame.draw.line(screen, (255, 255, 255), line_start, line_end, 1)
+
+    def renderSquare(self, screen, node, targeted):
+        if(targeted):
+            color = pygame.Color(255, 0, 255)
+        else:
+            color = pygame.Color(0, 255, 0)
+        pygame.draw.line(screen, color, self.tuple_world_to_screen((node.x, node.y)), self.tuple_world_to_screen((node.w, node.h)))
+        pygame.draw.line(screen, color, self.tuple_world_to_screen((node.x, node.h)), self.tuple_world_to_screen((node.w, node.y)))
+
+
+    def highlight_planet(self, screen, planet):
+        pygame.draw.circle(screen, planet.color, self.tuple_world_to_screen(planet.position), self.scale_radius(50))
+
+
+    def scale_radius(self,radius):
+        scaled_radius = max(1, int(radius * self.zoom))
+        return scaled_radius
+
+
+    def tuple_world_to_screen(self, grouped_tuple):
+        return pygame.Vector2(pygame.Vector2(grouped_tuple) * self.zoom) + self.CURRENT_OFFSET + self.center
 
     #def draw_history(self, screen, pixelArray, CURRENT_OFFSET, zoom):
     #    for x in pixelArray:
