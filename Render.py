@@ -8,6 +8,7 @@ class Render:
         self.CURRENT_OFFSET = pygame.Vector2(self.CURRENT_OFFSET_X, self.CURRENT_OFFSET_Y)
         self.center = pygame.Vector2(center)
         self.zoom = zoom_level
+        self.render_spacing = 30
 
 
 
@@ -26,7 +27,8 @@ class Render:
     def renderPlanets(self, screen, pixelArray):
         for x in pixelArray:
             world_pos = pygame.Vector2(x.getPosition())
-            screen_pos = (world_pos + pygame.Vector2(self.CURRENT_OFFSET)) * self.zoom + self.center
+            screen_pos = self.tuple_world_to_screen(world_pos)
+            #screen_pos = (world_pos + pygame.Vector2(self.CURRENT_OFFSET)) * self.zoom + self.center
             scaled_radius = max(1, int(x.radius * self.zoom))
             pygame.draw.circle(screen, x.color, screen_pos, scaled_radius)
 
@@ -78,6 +80,15 @@ class Render:
     def scale_radius(self,radius):
         scaled_radius = max(1, int(radius * self.zoom))
         return scaled_radius
+
+    def render_UI(self, screen, start_position, text_arr, is_top_down):
+        if is_top_down:
+            for x in enumerate(text_arr):
+                self.render_text(screen, (start_position[0], start_position[1]+x[0]*self.render_spacing), x[1])
+        else:
+            modified_start = screen.get_height()-len(text_arr)*self.render_spacing
+            for x in enumerate(text_arr):
+                self.render_text(screen, (start_position[0], modified_start+x[0]*self.render_spacing), x[1])
 
 
     def tuple_world_to_screen(self, grouped_tuple):

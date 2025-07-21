@@ -71,7 +71,7 @@ class pixel:
     def gravity(self, g, obj0, obj1):
         self.direction = self.getDirection(obj0.position, obj1.position)    #Normalized Direction
         if(obj0.position != obj1.position):
-            if(math.dist(obj0.position, obj1.position) > (obj0.radius + obj1.radius+30)): #While collision is disabled, remove later
+            if(math.dist(obj0.position, obj1.position) > (obj0.radius + obj1.radius)): #While collision is disabled, remove later
                 self.force = (g * obj0.mass * obj1.mass) / (math.dist(obj0.position, obj1.position) ** 2) #Force
         self.gForce += (self.direction * self.force)  #Vector Created
 
@@ -84,4 +84,4 @@ class pixel:
         new_position = direction_to_com*(self.radius+h+30)
         new_direction = pygame.Vector2(direction_to_com[1]*-1*direction, direction_to_com[0]*direction)
 
-        return pixel(30, vec1, new_direction, needed_velocity * 50, (0, random.randint(0, 150), random.randint(150, 255)), 15, False)
+        return pixel(30, vec1, new_direction, needed_velocity*30, (0, random.randint(0, 150), random.randint(150, 255)), 15, False)

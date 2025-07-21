@@ -13,7 +13,7 @@ class QuadTree:
         self.w = w
         self.h = h
         self.width = abs(x-w)
-        self.max = 30 # Defines points which can exist before square subdivision
+        self.max = 2 # Defines points which can exist before square subdivision
         self.theta = 0
         self.screen = screen
         self.depth = depth
@@ -111,7 +111,7 @@ class QuadTree:
             return False
 
     def returnCenter(self):
-        return (self.w/2, self.h/2)
+        return (self.x + self.w) / 2, (self.y + self.h) / 2
 
 
     def helperDFS3(self, node):
@@ -208,7 +208,7 @@ class QuadTree:
     def pointsIn(self, x0, y0, x1, y1, points):
         newPoints = []
         for j in points:
-            if x0 <= j[0] <= x1 and y0 <= j[1] <= y1:
+            if x0 <= j[0] < x1 and y0 < j[1] <= y1:
                 newPoints.append(j)
         return newPoints
 

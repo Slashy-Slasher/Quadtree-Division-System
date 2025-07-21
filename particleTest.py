@@ -23,7 +23,7 @@ clock = pygame.time.Clock()
 telemetry_enabled = False
 
 zoom_level = .5
-threshold_angle = .1
+threshold_angle = 1
 debug = False
 center = pygame.Vector2(screen.get_width() // 2, screen.get_height() // 2)
 current_offset = (0,0)
@@ -280,7 +280,7 @@ pixelArray = [
 #    pixelArray.append(pixelFactory2(0, 8000, 1))
 
 for x in range(200):   #Number of planets to be "Spawned"
-    pixelArray.append(pixelFactory2(0, 5000, -1))
+    pixelArray.append(pixelFactory2(0, 50000, -1))
 
 
 for x in pixelArray:    #Initializes the force vectors
@@ -290,7 +290,7 @@ total_quadTree_time = 0
 total_collision_time = 0
 total_tick_time = 0
 total_operations = 0
-zoom_step = .1
+zoom_step = .01
 last_mouse_pos = 0
 dragging = False
 
@@ -326,20 +326,18 @@ while running:
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Left click
                 dragging = True
-                print("M Down")
-                last_mouse_pos = (pygame.Vector2(pygame.mouse.get_pos()))*zoom_level
-
+                #print("M Down")
+                last_mouse_pos = (pygame.Vector2(pygame.mouse.get_pos()))
         if event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:
                 dragging = False
-                print("M Up")
+                #print("M Up")
 
         if event.type == pygame.MOUSEMOTION:
             if dragging:
-                mouse_pos = pygame.Vector2(pygame.mouse.get_pos())*zoom_level
-                movement = (mouse_pos - last_mouse_pos)
-                current_offset += movement*zoom_level
-                print(current_offset)
+                mouse_pos = pygame.Vector2(pygame.mouse.get_pos())
+                movement = ((mouse_pos) - (last_mouse_pos))
+                current_offset += movement
                 Rend.set_Offset(current_offset)
                 last_mouse_pos = mouse_pos
 
@@ -378,15 +376,27 @@ while running:
     else:
         array, tree, lineHistory = redrawQuadTree(pixelArray, SIZE)  #Draws out the quadtree and creates the game window, returns the leaf array
         SIZE = tree.rootSize
+        #print(f'Tree Center: {tree.center}')
+        #print(f'Sun position: {pixelArray[0].position}')
         #print(SIZE)
         universe_tick(pixelArray,array, tree,lineHistory, delta_time)  # Runs the model of the simulation based on the leaf array
         SIZE = tree.rootSize
         #collision_tick(pixelArray, nested_pixel_array)  # Currently disabled for visuals
         #Rend.scale_world(screen, .5)   #Use this for the minimap, will have to come back to it though
-    Rend.render_text(screen, (0, 0),
-                     f'Total Planets: {len(pixelArray)}  Tree-Space: {tree.points_in_treeSpace()} Theta: {threshold_angle}, RootSize: {tree.rootSize}, furthest_Point: {tree.find_furthest_point_from_center(pixelArray).position}')
-    Rend.render_text(screen, (0, 30),
-                     f'zoom_level {zoom_level}      zoom_step {zoom_step}')
+
+        text_arr = [
+        f'Total Planets: {len(pixelArray)}',
+        f'Max: {tree.max}',
+        f'Theta: {threshold_angle}',
+        f'FPS: {clock.get_fps():.2f}',
+        f'RootSize: {tree.rootSize}'
+
+        ]
+        Rend.render_UI(screen, (0,0), text_arr, True)
+        text_arr = [f'Furthest_Point: {tree.find_furthest_point_from_center(pixelArray).position}',
+        f'Zoom_Level: {zoom_level}',
+        f'Zoom_Step:  {zoom_step}']
+        Rend.render_UI(screen, (0, 0), text_arr, False)
 
     pygame.display.flip()
 
