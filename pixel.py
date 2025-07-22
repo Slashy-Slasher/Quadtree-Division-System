@@ -18,6 +18,7 @@ class pixel:
         self.lockedState = isLocked
         self.position_history = []
         self.velocity_history = []
+        self.slated_for_removal = False
 
     def getPosition(self):
         return tuple(self.position)
@@ -41,6 +42,8 @@ class pixel:
             self.direction = direction
             self.force = force
             self.gForce = self.direction * self.force
+
+
 
     def applyForce(self, dt):
         #self.position = self.force * pygame.Vector2(self.direction)
@@ -98,21 +101,23 @@ class pixel:
             force = 0
         self.gForce += (direction * force)
 
+
+
     @staticmethod
     @njit
     def gravity_with_COM_numba(g, m1, m2, x0, y0, x1, y1):
         dx = x1 - x0
         dy = y1 - y0
         dist_squared = dx * dx + dy * dy
-
         if dist_squared > 0.0:
             inv_dist = 1.0 / dist_squared ** 0.5
             fx = dx * inv_dist
             fy = dy * inv_dist
             force = (g * m1 * m2) / dist_squared
         else:
-            fx = fy = force = 0.0
-
+            fx=  0.0
+            fy = 0.0
+            force = 0.0
         return fx * force, fy * force
 
 
@@ -124,13 +129,23 @@ class pixel:
         self.gForce += (direction * force)
 
 
+    def form_galaxy(self, grav_constant, h, direction):
+        vec0 = pygame.Vector2(self.getPosition())
+        vec1 = pygame.Vector2(self.getPosition()[0] + (self.radius + h + 30), self.getPosition()[1]+ random.randint(-1000,1000))
+        direction_to_com = pygame.Vector2(vec0 - vec1).normalize()
+        # new_position = direction_to_com*(self.radius+h+30)
+
+        needed_velocity = math.sqrt((grav_constant * self.getMass()) / (self.radius + h))
+        new_direction = pygame.Vector2(direction_to_com[1] * -1 * direction, direction_to_com[0] * direction)
+        return pixel(30, vec1, new_direction, needed_velocity*2,
+                     (0, random.randint(0, 150), random.randint(150, 255)), 15, False)
+
+
     def form_satellite(self, grav_constant, h, direction):   #forms a satellite around "self", r is desired distance
         needed_velocity = math.sqrt((grav_constant * self.getMass())/(self.radius+h+15))
         vec0 = pygame.Vector2(self.getPosition())
-        #vec1 = pygame.Vector2(self.getPosition())+pygame.Vector2(random.randint(-r, r), random.randint(-r, r))
         vec1 = pygame.Vector2(self.getPosition()[0]+(self.radius+h+30), self.getPosition()[1])
         direction_to_com = pygame.Vector2(vec0 - vec1).normalize()
-        new_position = direction_to_com*(self.radius+h+30)
+        #new_position = direction_to_com*(self.radius+h+30)
         new_direction = pygame.Vector2(direction_to_com[1]*-1*direction, direction_to_com[0]*direction)
-
-        return pixel(30, vec1, new_direction, needed_velocity*30, (0, random.randint(0, 150), random.randint(150, 255)), 15, False)
+        return pixel(30, vec1, new_direction, needed_velocity*20, (0, random.randint(0, 150), random.randint(150, 255)), 15, False)
