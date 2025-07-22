@@ -1,7 +1,9 @@
 import math
 import random
+from collections import deque
 
 import pygame
+from numba import njit
 
 
 class pixel:
@@ -42,12 +44,15 @@ class pixel:
 
     def applyForce(self, dt):
         #self.position = self.force * pygame.Vector2(self.direction)
+        #print(f'Entered Method with: {self.force} force')
         if not self.getlockedState():
+            #print(f'Applied force: {self.force}')
             self.position += self.gForce * dt
-            self.position_history.append(self.position)
-            self.velocity_history.append(self.gForce)
-            if len(self.position_history) > 100:
-                del self.position_history[0]
+            #self.position_history.append(self.position)
+            #self.velocity_history.append(self.gForce)
+            #self.position_history = deque(maxlen=100)
+
+
 
         #self.gForce = pygame.Vector2(0,0)
 
@@ -61,6 +66,20 @@ class pixel:
 
         return direction.normalize()
 
+    def get_distance_and_direction(self, p0, p1):
+        vec = pygame.Vector2(p1) - pygame.Vector2(p0)
+        distance  = vec.length_squared()
+        #print(f'Distance: {distance}')
+        if(distance > 0):
+            direction = vec/distance
+        else:
+            direction = pygame.Vector2(0, 0)
+
+        #print(f'Distance: {distance}, Direction: {direction}')
+        return distance, direction
+
+
+
     @staticmethod
     def return_list_mass(pixel_array):
         temp_mass = 0
@@ -69,11 +88,41 @@ class pixel:
         return temp_mass
 
     def gravity(self, g, obj0, obj1):
-        self.direction = self.getDirection(obj0.position, obj1.position)    #Normalized Direction
-        if(obj0.position != obj1.position):
-            if(math.dist(obj0.position, obj1.position) > (obj0.radius + obj1.radius)): #While collision is disabled, remove later
-                self.force = (g * obj0.mass * obj1.mass) / (math.dist(obj0.position, obj1.position) ** 2) #Force
-        self.gForce += (self.direction * self.force)  #Vector Created
+        position0 = obj0.getPosition()
+        position1 = obj1.getPosition()
+        distance, direction = self.get_distance_and_direction(position0, position1)
+        #print(distance)
+        if distance != 0:
+            force = (g * obj0.mass * obj1.mass) / (distance ** 2)  # Force
+        else:
+            force = 0
+        self.gForce += (direction * force)
+
+    @staticmethod
+    @njit
+    def gravity_with_COM_numba(g, m1, m2, x0, y0, x1, y1):
+        dx = x1 - x0
+        dy = y1 - y0
+        dist_squared = dx * dx + dy * dy
+
+        if dist_squared > 0.0:
+            inv_dist = 1.0 / dist_squared ** 0.5
+            fx = dx * inv_dist
+            fy = dy * inv_dist
+            force = (g * m1 * m2) / dist_squared
+        else:
+            fx = fy = force = 0.0
+
+        return fx * force, fy * force
+
+
+    #Methods designed to calculate force between two planets. Works, but isn't performant because of Python's object
+    def gravity_with_COM(self, g, obj0, position1, mass):
+        position0 = obj0.position
+        (distance, direction) = self.get_distance_and_direction(position0, position1)
+        force = (g * obj0.mass * mass) / distance  # Force
+        self.gForce += (direction * force)
+
 
     def form_satellite(self, grav_constant, h, direction):   #forms a satellite around "self", r is desired distance
         needed_velocity = math.sqrt((grav_constant * self.getMass())/(self.radius+h+15))

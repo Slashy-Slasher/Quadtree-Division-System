@@ -3,11 +3,19 @@ import math
 from itertools import combinations
 from random import randint
 from concurrent.futures import ThreadPoolExecutor
+
+from jaxlib.xla_client import profiler
+from sympy import false
+
+
 from QuadTree import QuadTree
 import pygame
 
 from Render import Render
 from pixel import pixel
+
+from pyinstrument import Profiler
+import pyinstrument
 
 backColor = (255, 255, 255)
 resolution = (width, height) = (1000, 1000)   #This doesn't play with all systems well, but works as a test
@@ -23,13 +31,13 @@ clock = pygame.time.Clock()
 telemetry_enabled = False
 
 zoom_level = .5
-threshold_angle = 1
+threshold_angle = 10
 debug = False
 center = pygame.Vector2(screen.get_width() // 2, screen.get_height() // 2)
 current_offset = (0,0)
 
 
-Rend = Render("test", center, current_offset, zoom_level)
+Rend = Render(center, current_offset, zoom_level)
 
 
 def alignPoints(pixelArray):
@@ -39,39 +47,36 @@ def alignPoints(pixelArray):
     return points
 
 
-def pixelArrayGrouping(pixelArray, leafList): #This method takes the 2d Coordinates from the quad tree and groups the pixel array
-    position_hash = {pixel.getPosition(): pixel for pixel in pixelArray}
-    grouped_pixelArray = []
-    for leaf in leafList:
-        points = set(leaf.getPoints())  # Faster lookup
-        group = []
-        for point in points:
-            pixel = position_hash.get(point)
-            if pixel:
-                group.append(pixel)
-        grouped_pixelArray.append(group)  # Add group for this leaf
-    if len(grouped_pixelArray) < 1:
-        grouped_pixelArray.append(pixelArray)
-        return grouped_pixelArray
-    return grouped_pixelArray
+#def pixelArrayGrouping(pixelArray, leafList): #This method takes the 2d Coordinates from the quad tree and groups the pixel array
+#    position_hash = {pixel.getPosition(): pixel for pixel in pixelArray}
+#    grouped_pixelArray = []
+#    for leaf in leafList:
+#        points = set(leaf.getPoints())  # Faster lookup
+#        group = []
+#        for point in points:
+#            pixel = position_hash.get(point)
+#            if pixel:
+#                group.append(pixel)
+#        grouped_pixelArray.append(group)  # Add group for this leaf
+#    if len(grouped_pixelArray) < 1:
+#        grouped_pixelArray.append(pixelArray)
+#        return grouped_pixelArray
+#    return grouped_pixelArray
 
 
-def findCenterOfMass(pixelArray):
-    numeratorX = 0
-    numeratorY = 0
-    denominator = 0
-    com = 0
+@pyinstrument.profile()
+def universe_tick(pixelArray, leafList, tree, history, delta_time):   #Functions as the primary driver of the Barnes-Hut Simulation
+    #Pre-check to see if some planets are out of bounds
+    tree.out_of_bounds(pixelArray)
+    #Calculates the force for every object in the quadtree
+    gravitational_calculator(gravitational_constant, tree, leafList)
+    #Applies forces calculated in the gravitational_calculator
     for x in pixelArray:
-        numeratorX += x.getPosition()[0]*x.getMass()
-        numeratorY += x.getPosition()[1]*x.getMass()
-    for x in pixelArray:
-        denominator += x.getMass()
-    if(denominator != 0):
-        com = (numeratorX/denominator, numeratorY/denominator)
-    return com
+        x.applyForce(delta_time)
 
+#@pyinstrument.profile()
 def redrawQuadTree(pixelArray, size):
-    tree = QuadTree(-size, -size, size, size, alignPoints(pixelArray), screen,0, render_quadtree, 1, pixelArray)  # Change Points to Align Points
+    tree = QuadTree(-size, -size, size, size, alignPoints(pixelArray), screen,0, false, 1, pixelArray)  # Change Points to Align Points
     tree.out_of_bounds(tree.planets_in_sector)
 
     history = tree.subDivide(0)
@@ -80,10 +85,10 @@ def redrawQuadTree(pixelArray, size):
     #Rend.draw_history(screen, pixelArray, pygame.Vector2(0, 0))
 
     Rend.renderPlanets(screen, pixelArray)
-    Rend.renderQuadtree(screen, history, tree)
+    if(render_quadtree):
+        Rend.renderQuadtree(screen, history, tree)
     #pygame.display.flip()
     array = QuadTree.helperDFS3(tree, tree)    #Should contain all the relevant data from the struct
-
     return array, tree, history
 
 def gravitational_calculator_multithread(g, tree, leaf, pixelArray, debug, delta_time, history, screen, zoom_level):
@@ -119,59 +124,40 @@ def gravitational_calculator_multithread(g, tree, leaf, pixelArray, debug, delta
             Rend.renderPlanets(screen, pixelArray)
 
 
+
 #The threshold_angle is used to figure out the level of estimation needed
-def gravitational_calculator(g, tree, leafList, pixelArray, history, debug, delta_time):
-    #use s/d <
+def gravitational_calculator(g, tree, leafList):
 
-    #Create a linear path of planets to be iterated over (N)
-    #For each planet in the list, start with the 4 children node of the root then compare s/d to threshold_angle
-    #If the equation s/d < theta is true, the planet is far enough away to use the major approximation
-    #elif the s/d > theta, break down that child_node into it's children and repeat the process till s/d < theta = True
-    #AND if a leaf node is found, ensure that the leaf node doesn't contain the current planet.
-    #Apply the
-    # between the center of mass and the planet.
+    planet_list = []
+    planet_to_leaf = {}
+    for leaf in leafList:                       #Reverse dictionary lookup, converts the planet to the current Leaf
+        for planet in leaf.planets_in_sector:   #Reverse dictionary lookup, converts the planet to the current Leaf
+            planet_to_leaf[planet] = leaf       #Reverse dictionary lookup, converts the planet to the current Leaf
+            planet_list.append(planet)
 
-    sectors = []
-    #print(len(leafList))
-    for leaf_index, leaf in enumerate(leafList):                  #This loops through every leaflist in the system
-        for planet_index, planet in enumerate(leaf.planets_in_sector):   #This loops through every planet in the systen
-            #Can functionally ignore above
-            sectors = tree.return_children()    #4 root children
-            if(debug):
-                Rend.highlight_planet(screen, planet)   #REMOVE
-            for current_node in sectors:
-                if(debug):
-                    pygame.draw.circle(screen, (0, 0, 255), Rend.tuple_world_to_screen(current_node.COM), 5)
-                    pygame.display.flip()
-                distance = math.dist(current_node.COM, planet.getPosition()) #Finds the distance between x planet and y COM
-                #Easy Computations
-                if distance != 0 and math.dist(current_node.COM, leaf.COM) != 0:   #Far-Off Sectors
-                    if(debug):
-                        Rend.renderSquare(screen, current_node, False)  #REMOVE
-                        pygame.display.flip()
-                        #pygame.time.wait(100)
-                    if(current_node.width / distance) > threshold_angle:
-                        sectors.extend(current_node.return_children())
-                    else: #(current_node.width / math.dist(current_node.COM, planet.getPosition())) < threshold_angle:
-                        temp_pixel = pixel(current_node.mass, current_node.COM, (0, 0),0,(0,0,0), 5,True)
-                        planet.gravity(g, planet, temp_pixel)
-                #Hard Computations
-                else:   #Intra-Sector Calculation
-                    if(debug):
-                        Rend.renderSquare(screen, current_node, True)   #REMOVE
-                        pygame.display.flip()
-                    for temp_planet in current_node.planets_in_sector:
-                        for comparison_planet in current_node.planets_in_sector:
-                            if temp_planet != comparison_planet:
-                                temp_planet.gravity(g, temp_planet, comparison_planet)
+    for planet in planet_list:                   #Avoids needing to double loop
+        #Can functionally ignore above
+        sectors = tree.return_children()    #4 root children
+        p1_position = planet.getPosition()
+        for current_node in sectors:
+            distance = math.dist(current_node.COM, p1_position) #Finds the distance between x planet and y COM
+            current_nodes_COM = current_node.COM
+            # Far-Off Sectors
+            # Easy Computations
+            if distance != 0 and current_node != planet_to_leaf[planet]:
+                if(current_node.width / distance) > threshold_angle:
+                    sectors.extend(current_node.return_children())
+                else:
+                    planet.gForce += pygame.Vector2(planet.gravity_with_COM_numba(g, planet.mass, current_node.mass, p1_position[0], p1_position[1], current_nodes_COM[0],current_nodes_COM[1]))
+                    #planet.gravity_with_COM_numba(g, planet, current_nodes_COM, current_node.mass)
 
-            if debug:
-                screen.fill(pygame.Color(0, 0, 0))
-                Rend.renderQuadtree(screen, history, tree)
-                Rend.renderPlanets(screen, pixelArray)
-    tree.out_of_bounds(pixelArray)
-    for x in pixelArray:
-        x.applyForce(delta_time)
+            # Intra-Sector Calculation
+            #Hard Computations
+            else:
+                for a,b in combinations(current_node.planets_in_sector, 2):
+                    a.gravity(g, a, b)
+                    b.gravity(g, a, b)
+
 
 
 ##Testing more "efficient" method however results are varied
@@ -234,23 +220,10 @@ def pixelFactory2(index, spacing, direction):
     return pixelArray[index].form_satellite(gravitational_constant, randint(int(pixelArray[index].radius), spacing), direction)
 
 
-def universe_tick(pixelArray, leafList, tree, history, delta_time):   #Functions as the primary driver of the Barnes-Hut Simulation
-    nested_pixel_array = pixelArrayGrouping(pixelArray, array) #Merges the information from the two lists together
-    with ThreadPoolExecutor() as executor:
-        for leaf in leafList:
-            executor.submit(gravitational_calculator_multithread, gravitational_constant, tree, leaf, pixelArray, debug, delta_time, history, screen,
-                            zoom_level)
 
-    tree.out_of_bounds(pixelArray)
-
-    for x in pixelArray:
-        x.applyForce(delta_time)
-    gravitational_calculator(gravitational_constant, tree, leafList, pixelArray, history, debug, delta_time)
-    return nested_pixel_array
-
-sun_mass = 1000000
+sun_mass = 100000
 pixelArray = [
-        pixel(sun_mass, (0,0), (1,0), 0, (255,255,0), 100, True),
+        pixel(sun_mass, (1,1), (1,0), 0, (255,255,0), 100, True),
         #pixel(sun_mass, (100, 0), (1, 0), 0, (255, 255, 0), 100, True),
 
     #pixel(200 * 10000, (0,0), (1, 0), 0, (255, 255, 0), 100, True),
@@ -261,15 +234,15 @@ pixelArray = [
     ]
 
 
-#for _ in range(10):
-#    x = random.randint(-500, 500)
-#    y = random.randint(-500, 500)
-#    dx = 0
-#    dy = 0
-#    mass = random.randint(10, 200)
-#    diameter = random.randint(5, 20)
-#    color = (random.randint(100, 255), random.randint(100, 255), random.randint(100, 255))
-#    pixelArray.append(pixel(mass, (x, y), (dx, dy), 0, color, diameter, True))
+for _ in range(100):
+    x = random.randint(-500, 500)
+    y = random.randint(-500, 500)
+    dx = 0
+    dy = 0
+    mass = random.randint(10, 200)
+    diameter = random.randint(5, 20)
+    color = (random.randint(100, 255), random.randint(100, 255), random.randint(100, 255))
+    pixelArray.append(pixel(mass, (x, y), (dx, dy), 0, color, diameter, False))
 
 
 
@@ -279,8 +252,8 @@ pixelArray = [
 #for x in range(2000):   #Number of planets to be "Spawned"
 #    pixelArray.append(pixelFactory2(0, 8000, 1))
 
-for x in range(200):   #Number of planets to be "Spawned"
-    pixelArray.append(pixelFactory2(0, 50000, -1))
+#for x in range(5):   #Number of planets to be "Spawned"
+#    pixelArray.append(pixelFactory2(0, 5000, -1))
 
 
 for x in pixelArray:    #Initializes the force vectors
@@ -314,7 +287,8 @@ while running:
             elif event.key == pygame.K_RIGHT:
                 zoom_step += 0.001
                 zoom_step = max(0.001, zoom_step)
-
+            elif event.key == pygame.K_SPACE:
+                render_quadtree = not render_quadtree
         if event.type == pygame.MOUSEWHEEL:
             if event.y > 0:
                 zoom_level -= zoom_step  # Scroll up = zoom in
@@ -342,7 +316,6 @@ while running:
                 last_mouse_pos = mouse_pos
 
 
-
     Rend.set_zoom(zoom_level)
     delta_time = clock.tick(60)/1000
     screen.fill((0, 0, 0))  # <<< Clear the screen here
@@ -359,6 +332,7 @@ while running:
         print(f"Quadtree time: {quadtree_time} milliseconds")
         start_ticks = pygame.time.get_ticks()
         nested_pixel_array = universe_tick(pixelArray,array, tree, lineHistory, delta_time)  # Runs the model of the simulation based on the leaf array
+        SIZE = tree.rootSize
         end_ticks = pygame.time.get_ticks()
         tick_time = end_ticks - start_ticks
         total_tick_time += tick_time
@@ -376,27 +350,24 @@ while running:
     else:
         array, tree, lineHistory = redrawQuadTree(pixelArray, SIZE)  #Draws out the quadtree and creates the game window, returns the leaf array
         SIZE = tree.rootSize
-        #print(f'Tree Center: {tree.center}')
-        #print(f'Sun position: {pixelArray[0].position}')
-        #print(SIZE)
         universe_tick(pixelArray,array, tree,lineHistory, delta_time)  # Runs the model of the simulation based on the leaf array
         SIZE = tree.rootSize
         #collision_tick(pixelArray, nested_pixel_array)  # Currently disabled for visuals
         #Rend.scale_world(screen, .5)   #Use this for the minimap, will have to come back to it though
 
-        text_arr = [
-        f'Total Planets: {len(pixelArray)}',
-        f'Max: {tree.max}',
-        f'Theta: {threshold_angle}',
-        f'FPS: {clock.get_fps():.2f}',
-        f'RootSize: {tree.rootSize}'
+    text_arr = [
+    f'Total Planets: {len(pixelArray)}',
+    f'Max: {tree.max}',
+    f'Theta: {threshold_angle}',
+    f'FPS: {clock.get_fps():.2f}',
+    f'RootSize: {tree.rootSize}'
 
-        ]
-        Rend.render_UI(screen, (0,0), text_arr, True)
-        text_arr = [f'Furthest_Point: {tree.find_furthest_point_from_center(pixelArray).position}',
-        f'Zoom_Level: {zoom_level}',
-        f'Zoom_Step:  {zoom_step}']
-        Rend.render_UI(screen, (0, 0), text_arr, False)
+    ]
+    Rend.render_UI(screen, (0,0), text_arr, True)
+    text_arr = [f'Furthest_Point: {tree.find_furthest_point_from_center(pixelArray).position}',
+    f'Zoom_Level: {zoom_level}',
+    f'Zoom_Step:  {zoom_step}']
+    Rend.render_UI(screen, (0, 0), text_arr, False)
 
     pygame.display.flip()
 
