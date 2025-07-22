@@ -2,7 +2,7 @@ import pygame
 import random
 
 class Render:
-    def __init__(self, name, center, offset, zoom_level):
+    def __init__(self, center, offset, zoom_level):
         self.CURRENT_OFFSET_X = offset[0]
         self.CURRENT_OFFSET_Y = offset[1]
         self.CURRENT_OFFSET = pygame.Vector2(self.CURRENT_OFFSET_X, self.CURRENT_OFFSET_Y)
@@ -34,12 +34,15 @@ class Render:
 
     def renderQuadtree(self, screen, lineHistory, tree):
         self.encapsulate_quadtree(screen, tree)
+        zoom = self.zoom
+        current_offset = self.CURRENT_OFFSET
+        center = self.center
         for line_set in lineHistory:
             for i in range(0, len(line_set), 2):
                 start = pygame.Vector2(line_set[i])
                 end = pygame.Vector2(line_set[i + 1])
-                line_start = (start * self.zoom) + pygame.Vector2(self.CURRENT_OFFSET) + self.center
-                line_end = (end * self.zoom) + pygame.Vector2(self.CURRENT_OFFSET) + self.center
+                line_start = (start * zoom) + pygame.Vector2(current_offset) + center
+                line_end =   (end   * zoom) + pygame.Vector2(current_offset) + center
                 pygame.draw.line(screen, (255, 255, 255), line_start, line_end, 1)
 
 
