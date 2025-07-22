@@ -25,13 +25,14 @@ pygame.display.set_caption('Barnes-Hut')
 screen.fill(backColor)
 dotSize = 3
 SIZE = 8000
-gravitational_constant = .2  # Gravitational Constant [Set to .01 by default]
+gravitational_constant = 1 # Gravitational Constant [Set to .01 by default]
 render_quadtree = False
 clock = pygame.time.Clock()
 telemetry_enabled = False
 
-zoom_level = .5
+zoom_level = .02
 threshold_angle = 10
+threshold_angle_collision = .01
 debug = False
 center = pygame.Vector2(screen.get_width() // 2, screen.get_height() // 2)
 current_offset = (0,0)
@@ -74,7 +75,7 @@ def universe_tick(pixelArray, leafList, tree, history, delta_time):   #Functions
     for x in pixelArray:
         x.applyForce(delta_time)
 
-#@pyinstrument.profile()
+@pyinstrument.profile()
 def redrawQuadTree(pixelArray, size):
     tree = QuadTree(-size, -size, size, size, alignPoints(pixelArray), screen,0, false, 1, pixelArray)  # Change Points to Align Points
     tree.out_of_bounds(tree.planets_in_sector)
@@ -144,19 +145,24 @@ def gravitational_calculator(g, tree, leafList):
             current_nodes_COM = current_node.COM
             # Far-Off Sectors
             # Easy Computations
-            if distance != 0 and current_node != planet_to_leaf[planet]:
-                if(current_node.width / distance) > threshold_angle:
-                    sectors.extend(current_node.return_children())
-                else:
+            if current_node != planet_to_leaf[planet]:
+                if(current_node.width / distance) < threshold_angle:    #Need to implement better solution which will compute better
                     planet.gForce += pygame.Vector2(planet.gravity_with_COM_numba(g, planet.mass, current_node.mass, p1_position[0], p1_position[1], current_nodes_COM[0],current_nodes_COM[1]))
+                else:
+                    sectors.extend(current_node.return_children())
                     #planet.gravity_with_COM_numba(g, planet, current_nodes_COM, current_node.mass)
 
             # Intra-Sector Calculation
             #Hard Computations
             else:
                 for a,b in combinations(current_node.planets_in_sector, 2):
-                    a.gravity(g, a, b)
-                    b.gravity(g, a, b)
+                    a_position = a.getPosition()
+                    b_position = b.getPosition()
+                    a.gForce += pygame.Vector2(planet.gravity_with_COM_numba(g, a.mass, b.mass, a_position[0], a_position[1], b_position[0], b_position[1]))
+                    b.gForce += pygame.Vector2(planet.gravity_with_COM_numba(g, a.mass, b.mass, a_position[0], a_position[1], b_position[0], b_position[1]))
+                    #a.gravity(g, a, b)
+                    #b.gravity(g, a, b)
+
 
 
 
@@ -188,25 +194,83 @@ def gravitational_calculator(g, tree, leafList):
 #            planet.applyForce()
 #    return "Done"
 
+@pyinstrument.profile()
+def collision_with_quadtree(tree, leafList, pixelArray):
+    planet_list = []
+    planet_to_leaf = {}
+    planet_to_properPlanet = {}
+    for leaf in leafList:  # Reverse dictionary lookup, converts the planet to the current Leaf
+        for planet in leaf.planets_in_sector:  # Reverse dictionary lookup, converts the planet to the current Leaf
+            planet_to_leaf[planet] = leaf  # Reverse dictionary lookup, converts the planet to the current Leaf
+            planet_list.append(planet)
 
-def collision_tick(pixelArray, nested_pixel_array):
-    to_remove = set()
-    for sector in nested_pixel_array:
-        for planet1, planet2 in combinations(sector, 2):
-            if math.dist(planet1.getPosition(), planet2.getPosition()) < (planet1.radius + planet2.radius):
-                if planet1.mass < planet2.mass:
-                    to_remove.add(planet1)
+    for planet in pixelArray:  # Reverse dictionary lookup, converts the planet to the current Leaf
+        planet_to_properPlanet[planet] = planet  # Reverse dictionary lookup, converts the planet to the current Leaf
+        #planet_list.append(planet)
+
+    for planet in planet_list:  # Avoids needing to double loop
+        # Can functionally ignore above
+        sectors = tree.return_children()  # 4 root children
+        p1_position = planet.getPosition()
+        p1_radius = planet.radius
+        check_list = []
+        check_list.extend(planet_to_leaf[planet].planets_in_sector)
+        for current_node in sectors:
+            distance = math.dist(current_node.COM, p1_position)  # Finds the distance between x planet and y COM
+            if current_node != planet_to_leaf[planet]:
+                if (current_node.width / distance) < threshold_angle_collision:
+                   check_list.extend(current_node.planets_in_sector)
                 else:
-                    to_remove.add(planet2)
-    #Changed to more cleanly remove planets, will change to change vector + velocity after other issues are solved
-    for planet in to_remove:
-        if planet in pixelArray:
-            pixelArray.remove(planet)
-        for sector in nested_pixel_array:
-            if planet in sector:
-                sector.remove(planet)
+                    sectors.extend(current_node.return_children())
+        for comparison_planet in check_list:
+            if(comparison_planet != planet):
+                if math.dist(p1_position, comparison_planet.getPosition()) < (p1_radius + comparison_planet.radius):
+                    if(planet.mass > comparison_planet.mass):
+                        if comparison_planet in pixelArray:
+                            planet.mass += comparison_planet.mass
+                            planet.gForce += comparison_planet.gForce
+                            pixelArray.remove(comparison_planet)
+                            planet_list.remove(comparison_planet)
 
-    return pixelArray
+
+                    #planet.gForce += comparison_planet.gForce/2
+
+
+    #for planet in check_list:
+    #    for a, b in combinations(check_list, 2):
+
+
+
+
+
+    #for leaf in leafList:
+    #    for a, b in combinations(leaf.planets_in_sector, 2):
+    #        a_planet = a
+    #        b_planet = b
+    #        a_position = pygame.Vector2(a_planet.getPosition())
+    #        b_position = pygame.Vector2(b_planet.getPosition())
+    #        if(math.dist(a_position, b_position) < (a_planet.radius + b_planet.radius)):
+    #            return True
+
+
+#def collision_tick(pixelArray, nested_pixel_array):
+#    to_remove = set()
+#    for sector in nested_pixel_array:
+#        for planet1, planet2 in combinations(sector, 2):
+#            if math.dist(planet1.getPosition(), planet2.getPosition()) < (planet1.radius + planet2.radius):
+#                if planet1.mass < planet2.mass:
+#                    to_remove.add(planet1)
+#                else:
+#                    to_remove.add(planet2)
+#    #Changed to more cleanly remove planets, will change to change vector + velocity after other issues are solved
+#    for planet in to_remove:
+#        if planet in pixelArray:
+#            pixelArray.remove(planet)
+#        for sector in nested_pixel_array:
+#            if planet in sector:
+#                sector.remove(planet)
+#
+#    return pixelArray
 
 
 def pixelFactory():
@@ -217,13 +281,13 @@ def pixelFactory():
     return temp_pixel
 
 def pixelFactory2(index, spacing, direction):
-    return pixelArray[index].form_satellite(gravitational_constant, randint(int(pixelArray[index].radius), spacing), direction)
+    return pixelArray[index].form_galaxy(gravitational_constant, randint(int(pixelArray[index].radius), spacing), direction)
 
 
 
 sun_mass = 100000
 pixelArray = [
-        pixel(sun_mass, (1,1), (1,0), 0, (255,255,0), 100, True),
+        pixel(sun_mass, (50,50), (1,0), 0, (255,255,0), 100, True),
         #pixel(sun_mass, (100, 0), (1, 0), 0, (255, 255, 0), 100, True),
 
     #pixel(200 * 10000, (0,0), (1, 0), 0, (255, 255, 0), 100, True),
@@ -234,15 +298,15 @@ pixelArray = [
     ]
 
 
-for _ in range(100):
-    x = random.randint(-500, 500)
-    y = random.randint(-500, 500)
-    dx = 0
-    dy = 0
-    mass = random.randint(10, 200)
-    diameter = random.randint(5, 20)
-    color = (random.randint(100, 255), random.randint(100, 255), random.randint(100, 255))
-    pixelArray.append(pixel(mass, (x, y), (dx, dy), 0, color, diameter, False))
+#for _ in range(2000):
+#    x = random.randint(-500000, 500000)
+#    y = random.randint(-500000, 500000)
+#    dx = 0
+#    dy = -1
+#    mass = random.randint(10, 200)
+#    diameter = random.randint(5, 20)
+#    color = (random.randint(100, 255), random.randint(100, 255), random.randint(100, 255))
+#    pixelArray.append(pixel(mass, (x, y), (dx, dy), 6, color, diameter, False))
 
 
 
@@ -252,8 +316,8 @@ for _ in range(100):
 #for x in range(2000):   #Number of planets to be "Spawned"
 #    pixelArray.append(pixelFactory2(0, 8000, 1))
 
-#for x in range(5):   #Number of planets to be "Spawned"
-#    pixelArray.append(pixelFactory2(0, 5000, -1))
+for x in range(1000):   #Number of planets to be "Spawned"
+    pixelArray.append(pixelFactory2(0, 50000, -1))
 
 
 for x in pixelArray:    #Initializes the force vectors
@@ -348,9 +412,10 @@ while running:
         print("-----------------------------")
         total_operations += 1
     else:
-        array, tree, lineHistory = redrawQuadTree(pixelArray, SIZE)  #Draws out the quadtree and creates the game window, returns the leaf array
+        leafList, tree, lineHistory = redrawQuadTree(pixelArray, SIZE)  #Draws out the quadtree and creates the game window, returns the leaf array
         SIZE = tree.rootSize
-        universe_tick(pixelArray,array, tree,lineHistory, delta_time)  # Runs the model of the simulation based on the leaf array
+        #collision_with_quadtree(tree, leafList, pixelArray) #Run collision first to prevent=
+        universe_tick(pixelArray,leafList, tree, lineHistory, delta_time)  # Runs the model of the simulation based on the leaf array
         SIZE = tree.rootSize
         #collision_tick(pixelArray, nested_pixel_array)  # Currently disabled for visuals
         #Rend.scale_world(screen, .5)   #Use this for the minimap, will have to come back to it though
