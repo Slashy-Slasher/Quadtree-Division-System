@@ -316,7 +316,7 @@ pixelArray = [
 #for x in range(2000):   #Number of planets to be "Spawned"
 #    pixelArray.append(pixelFactory2(0, 8000, 1))
 
-for x in range(1000):   #Number of planets to be "Spawned"
+for x in range(20000):   #Number of planets to be "Spawned"
     pixelArray.append(pixelFactory2(0, 50000, -1))
 
 
