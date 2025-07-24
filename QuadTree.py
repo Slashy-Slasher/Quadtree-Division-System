@@ -316,25 +316,36 @@ class QuadTree:
         elif self.variant == 1:
             pygame.time.delay(sleeptime)
             self.depth += 1
+
+            screen = self.screen
+            x = self.x
+            y = self.y
+            w = self.w
+            h = self.h
+
             if len(self.planets_in_sector) > self.max and self.root is True:
                 if self.rendering:
                     #self.draw_main_lines(self, 3)
-                    self.draw_sub_lines(self.screen, (self.w/2, self.y), (self.w/2, self.h),(self.x,self.h/2),(self.w,self.h/2))
+                    self.draw_sub_lines(screen, (w/2, y), (w/2, h),(x, h/2),(w,h/2))
 
+                new_x = x
+                new_y = y
+                new_w = w
+                new_h = h
                 self.lineHistory.append([
-                         ((self.w + self.x) / 2, self.y),
-                         ((self.w + self.x) / 2, self.h),
-                         (self.x, (self.h / 2 + self.y / 2)),
-                         (self.w, (self.h / 2 + self.y / 2))
+                         ((new_w + new_x) / 2, new_y),
+                         ((new_w + new_x) / 2, new_h),
+                         (new_x, (new_h / 2 + new_y / 2)),
+                         (new_w, (new_h / 2 + new_y / 2))
                                          ])
 
                 #Start of division
             if len(self.planets_in_sector) > self.max and self.depth < 1000:
                 #TLC
-                tlc_points = self.advanced_points_in(self.x, self.y, (self.x + self.w) / 2, (self.y + self.h) / 2, self.planets_in_sector)
+                tlc_points = self.advanced_points_in(x, y, (x + w) / 2, (y + h) / 2, self.planets_in_sector)
                 if len(tlc_points) > self.max:
-                    self.TLC = QuadTree(self.x, self.y, (self.x + self.w) / 2, (self.y + self.h) / 2, self.points,
-                                        self.screen, self.depth + 1, self.rendering, self.variant, tlc_points)
+                    self.TLC = QuadTree(x, y, (x + w) / 2, (y + h) / 2, self.points,
+                                        screen, self.depth + 1, self.rendering, self.variant, tlc_points)
                     #Extends the history of the children, creates a flat array
                     self.lineHistory.extend(self.TLC.subDivide(sleeptime))
                     new_x = self.TLC.x
@@ -343,22 +354,22 @@ class QuadTree:
                     new_h = self.TLC.h
                     #Appends the current line history to the array
                     self.lineHistory.append([
-                                        ((self.TLC.w + self.TLC.x) / 2, self.TLC.y),
-                                        ((self.TLC.w + self.TLC.x) / 2, self.TLC.h),
-                                        (self.TLC.x, (self.TLC.y + self.TLC.h) / 2),
-                                        (self.TLC.w, (self.TLC.y + self.TLC.h) / 2)
+                                        ((new_w + new_x) / 2, new_y),
+                                        ((new_w + new_x) / 2, new_h),
+                                        (new_x, (new_y + new_h) / 2),
+                                        (new_w, (new_y + new_h) / 2)
                                              ])
                 elif 0 < len(tlc_points) <= self.max:
-                    self.TLC = QuadTree(self.x, self.y, (self.x + self.w) / 2, (self.y + self.h) / 2, self.points,
-                                        self.screen, self.depth + 1, self.rendering, self.variant, tlc_points)
+                    self.TLC = QuadTree(x, y, (x + w) / 2, (y + h) / 2, self.points,
+                                        screen, self.depth + 1, self.rendering, self.variant, tlc_points)
 
 
                 #TRC
-                trc_points = self.advanced_points_in((self.w + self.x) / 2, self.y, self.w, (self.y + self.h) / 2,
+                trc_points = self.advanced_points_in((w + x) / 2, y, w, (y + h) / 2,
                                      self.planets_in_sector)
                 if len(trc_points) > self.max:  # w/2
-                    self.TRC = QuadTree((self.w + self.x) / 2, self.y, self.w, (self.y + self.h) / 2, self.points,
-                                        self.screen, self.depth + 1, self.rendering, self.variant, trc_points)
+                    self.TRC = QuadTree((w + x) / 2, y, w, (y + h) / 2, self.points,
+                                        screen, self.depth + 1, self.rendering, self.variant, trc_points)
                     # Extends the history of the children, creates a flat array
                     self.lineHistory.extend(self.TRC.subDivide(sleeptime))
 
@@ -368,23 +379,22 @@ class QuadTree:
                     new_h = self.TRC.h
 
                     self.lineHistory.append([
-                        ((self.TRC.w + self.TRC.x) / 2, self.TRC.y),
-                        ((self.TRC.w + self.TRC.x) / 2, self.TRC.h),
-                        (self.TRC.x, (self.TRC.h + self.TRC.y) / 2),
-                        (self.TRC.w, (self.TRC.h + self.TRC.y) / 2)
+                        ((new_w + new_x) / 2, new_y),
+                        ((new_w + new_x) / 2, new_h),
+                        (new_x, (new_h + new_y) / 2),
+                        (new_w, (new_h + new_y) / 2)
                                             ])
-                elif 0 < len(self.advanced_points_in((self.w + self.x) / 2, self.y, self.w, (self.y + self.h) / 2,
-                                           trc_points)) <= self.max:  # w/2
-                    self.TRC = QuadTree((self.w + self.x) / 2, self.y, self.w, (self.y + self.h) / 2, self.points,
-                                        self.screen, self.depth + 1, self.rendering, self.variant, trc_points)
+                elif 0 < len(trc_points) <= self.max:  # w/2
+                    self.TRC = QuadTree((w + x) / 2, y, w, (y + h) / 2, self.points,
+                                        screen, self.depth + 1, self.rendering, self.variant, trc_points)
 
 
                 #BLC
-                blc_points = self.advanced_points_in(self.x, (self.y + self.h) / 2, (self.x + self.w) / 2, self.h,
+                blc_points = self.advanced_points_in(x, (y + h) / 2, (x + w) / 2, h,
                                      self.planets_in_sector)
                 if len(blc_points) > self.max:  # h/2
-                    self.BLC = QuadTree(self.x, (self.y + self.h) / 2, (self.x + self.w) / 2, self.h, self.points,
-                                        self.screen, self.depth + 1, self.rendering, self.variant, blc_points)
+                    self.BLC = QuadTree(x, (y + h) / 2, (x + w) / 2, h, self.points,
+                                        screen, self.depth + 1, self.rendering, self.variant, blc_points)
                     # Extends the history of the children, creates a flat array
                     self.lineHistory.extend(self.BLC.subDivide(sleeptime))
                     new_x = self.BLC.x
@@ -394,21 +404,21 @@ class QuadTree:
 
                     #Appeneds BLC
                     self.lineHistory.append([
-                                           ((self.BLC.w + self.BLC.x) / 2, self.BLC.y),
-                                           ((self.BLC.w + self.BLC.x) / 2, self.BLC.h),
-                                           (self.BLC.x, (self.BLC.h + self.BLC.y) / 2),
-                                           (self.BLC.w, (self.BLC.h + self.BLC.y) / 2)
+                                           ((new_w + new_x) / 2, new_y),
+                                           ((new_w + new_x) / 2, new_h),
+                                           (new_x, (new_h + new_y) / 2),
+                                           (new_w, (new_h + new_y) / 2)
                                             ])
                 elif 0 < len(blc_points) <= self.max:  # h/2
-                    self.BLC = QuadTree(self.x, (self.y + self.h) / 2, (self.x + self.w) / 2, self.h, self.points,
-                                        self.screen, self.depth + 1, self.rendering, self.variant, blc_points)
+                    self.BLC = QuadTree(x, (y + h) / 2, (x + w) / 2, h, self.points,
+                                        screen, self.depth + 1, self.rendering, self.variant, blc_points)
 
                 #BRC
-                blc_points = self.advanced_points_in((self.w + self.x) / 2, (self.y + self.h) / 2, self.w, self.h,
+                blc_points = self.advanced_points_in((w + x) / 2, (y + h) / 2, w, h,
                                      self.planets_in_sector)
                 if len(blc_points) > self.max:
-                    self.BRC = QuadTree((self.w + self.x) / 2, (self.y + self.h) / 2, self.w, self.h, self.points,
-                                        self.screen, self.depth + 1, self.rendering, self.variant, blc_points)
+                    self.BRC = QuadTree((w + x) / 2, (y + h) / 2, w, h, self.points,
+                                        screen, self.depth + 1, self.rendering, self.variant, blc_points)
 
                     # Extends the history of the children, creates a flat array
                     self.lineHistory.extend(self.BRC.subDivide(sleeptime))
@@ -418,12 +428,12 @@ class QuadTree:
                     new_h = self.BRC.h
 
                     self.lineHistory.append([
-                            ((self.BRC.w + self.BRC.x) / 2, self.BRC.y),
-                            ((self.BRC.w + self.BRC.x) / 2, self.BRC.h),
-                            (self.BRC.x, self.BRC.h / 2 + self.BRC.y / 2),
-                            (self.BRC.w, (self.BRC.h / 2 + self.BRC.y / 2))
+                            ((new_w + new_x) / 2, new_y),
+                            ((new_w + new_x) / 2, new_h),
+                            (new_x, new_h / 2 + new_y / 2),
+                            (new_w, (new_h / 2 + new_y / 2))
                                              ])
                 elif 0 < len(blc_points) <= self.max:
-                    self.BRC = QuadTree((self.w + self.x) / 2, (self.y + self.h) / 2, self.w, self.h, self.points,
-                                        self.screen, self.depth + 1, self.rendering, self.variant, blc_points)
+                    self.BRC = QuadTree((w + x) / 2, (y + h) / 2, w, h, self.points,
+                                        screen, self.depth + 1, self.rendering, self.variant, blc_points)
         return self.lineHistory
