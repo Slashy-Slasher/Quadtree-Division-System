@@ -24,3 +24,10 @@ https://en.wikipedia.org/wiki/Quadtree
 <s>All current updates to the Barnes-Hut simulation will take place on the master branch, a merge will occur when the results are stable</s>
 This is no longer the case, all changes have been merged into the main Branch
 
+
+# Limitations of Python and Future Plans
+Through intensive debugging with the pyinstrument profiler, I've found that python's innate overhead was slowing down the simulation so much that even after using Numba's JIT-compling still became the bottleneck after creating 10000+ planets. 
+
+To combat this I've decided that I'm going to re-write this program in C++ using the library Raylib, it should primarily be "Copy-Translate-Paste" as much of the simulation's logic doesn't change during the language switch. However this should yield far better performance and could allow me to implement CUDA parallelism directly in the compiler allowing for a magnitude more planets than could ever be possible with python. 
+
+To keep this project neat however, I'm not going to add all of the project files from C++ as in previous projects they tend to clog up the repository. Only source and header files will be added under the folder Barnes-Hut C++. This should keep the old code easy to run in your IDE of choice while allowing you to see how the C++ implementation works, and with a little knowledge of C++ run them yourself too.
